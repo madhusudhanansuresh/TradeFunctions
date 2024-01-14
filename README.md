@@ -1,0 +1,2 @@
+# TradeFunctions
+Azure functions
