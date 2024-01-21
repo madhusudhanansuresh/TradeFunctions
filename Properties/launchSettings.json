@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "TradeFunctions": {
+      "commandName": "Project",
+      "commandLineArgs": "--port 7298",
+      "launchBrowser": false
+    }
+  }
+}
