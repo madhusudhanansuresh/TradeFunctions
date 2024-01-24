@@ -70,12 +70,14 @@ public partial class TradeContext : DbContext
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnType("timestamp without time zone")
                 .HasColumnName("last_update_dt");
+            entity.Property(e => e.Timestamp)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("timestamp");
             entity.Property(e => e.LowPrice).HasColumnName("low_price");
             entity.Property(e => e.OpenPrice).HasColumnName("open_price");
             entity.Property(e => e.Rsrw).HasColumnName("rsrw");
             entity.Property(e => e.Rvol).HasColumnName("rvol");
             entity.Property(e => e.TickerId).HasColumnName("ticker_id");
-            entity.Property(e => e.Timestamp).HasColumnName("timestamp");
             entity.Property(e => e.TradingVolume).HasColumnName("trading_volume");
             entity.Property(e => e.TransactionCount).HasColumnName("transaction_count");
             entity.Property(e => e.Vwap).HasColumnName("vwap");

@@ -8,18 +8,38 @@ using TradeFunctions.Models.Helpers;
 
 namespace TradeFunctions.Services
 {
-    public class TwelveDataService
+    public interface ITwelveDataService
+    {
+        Task<StockDataResponse> FetchStockDataAsync(List<string> symbols, List<string> intervals, string startDate, string endDate, int outputSize, MethodContainer methodContainer);
+    }
+    public class TwelveDataService : ITwelveDataService
     {
         private readonly HttpClient _client;
-        private readonly string _apiKey = "U1BBcIJmO2FU20QpAz820E6HXHcwipK3"; // Securely retrieve this
+        private readonly string _apiKey = "2ef41161b845412cb5a6ccc83b2ca317"; // Securely retrieve this
         public TwelveDataService()
         {
             _client = new HttpClient();
         }
 
-        public async Task<StockDataResponse> FetchStockDataAsync(List<string> symbols, List<string> intervals, string startDate, string endDate, int outputSize)
+        public async Task<StockDataResponse> FetchStockDataAsync(List<string> symbols, List<string> intervals, string startDate, string endDate, int outputSize, MethodContainer methodContainer)
         {
             var requestUri = $"https://api.twelvedata.com/complex_data?apikey={_apiKey}";
+
+            var transformedMethods = methodContainer.Methods.Select(method =>
+                {
+                    if (method is SimpleMethod simpleMethod)
+                    {
+                        return (object)simpleMethod.GetName();
+                    }
+                    else if (method is ComplexMethod complexMethod)
+                    {
+                        return new { name = complexMethod.GetName(), complexMethod.Parameters };
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException("Unknown method type.");
+                    }
+                }).ToList();
 
             var payload = new
             {
@@ -28,7 +48,7 @@ namespace TradeFunctions.Services
                 start_date = startDate,
                 end_date = endDate,
                 outputsize = outputSize,
-                methods = new[] { "time_series" }
+                methods = transformedMethods //new[] { "time_series" }
             };
 
             var data = JsonContent.Create(payload);
