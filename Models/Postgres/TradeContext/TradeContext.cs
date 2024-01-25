@@ -114,6 +114,30 @@ public partial class TradeContext : DbContext
                 .HasColumnName("ticker_name");
         });
 
+        modelBuilder.Entity<DailyIndicator>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("daily_indicators_pkey");
+
+            entity.ToTable("daily_indicators", "trade");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Atr).HasColumnName("atr");
+            entity.Property(e => e.CreateDt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("create_dt");
+            entity.Property(e => e.LastUpdateDt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("last_update_dt");
+            entity.Property(e => e.TickerId).HasColumnName("ticker_id");
+
+            entity.HasOne(d => d.Ticker).WithMany(p => p.DailyIndicators)
+                .HasForeignKey(d => d.TickerId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("daily_indicators_ticker_id_fkey");
+        });
+
         OnModelCreatingPartial(modelBuilder);
     }
 

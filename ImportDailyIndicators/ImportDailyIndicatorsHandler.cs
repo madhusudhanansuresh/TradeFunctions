@@ -43,14 +43,13 @@ namespace TradeFunctions.ImportDailyIndicators
                     var stockDataResponse = await _twelveDataService.FetchStockDataAsync(["AAPL"], [timeFrame], "", "", 1, methodContainer);
 
                     var tickerId = await dbContext.Tickers.Where(x => x.TickerName == "AAPL").Select(x => x.Id).FirstOrDefaultAsync();
-                    var chartId = await dbContext.ChartPeriods.Where(x => x.TimeFrame == timeFrame).Select(x => x.Id).FirstOrDefaultAsync();
 
                     foreach (var stockData in stockDataResponse.Data)
                     {
                         foreach (var value in stockData.Values)
                         {
-                            var stockPrice = MapToStockPrice(value, stockData.Meta, tickerId, chartId);
-                            dbContext.StockPrices.Add(stockPrice);
+                         //   var stockPrice = MapToStockPrice(value, stockData.Meta, tickerId);
+                            //dbContext.StockPrices.Add(stockPrice);
                         }
                     }
                     await dbContext.SaveChangesAsync(cancellationToken);
@@ -67,21 +66,20 @@ namespace TradeFunctions.ImportDailyIndicators
             }
         }
 
-        private StockPrice MapToStockPrice(ValueData valueData, MetaData metaData, int? tickerId, int chartId)
-        {
-            return new StockPrice
-            {
-                TickerId = tickerId,
-                ChartId = chartId,
-                TransactionCount = 0,
-                Vwap = 0,
-                ClosePrice = decimal.Parse(valueData.Close),
-                HighPrice = decimal.Parse(valueData.High),
-                LowPrice = decimal.Parse(valueData.Low),
-                OpenPrice = decimal.Parse(valueData.Open),
-                TradingVolume = decimal.Parse(valueData.Volume),
-                Timestamp = valueData.Datetime
-            };
-        }
+        // private DailyIndicator MapToStockPrice(ValueData valueData, MetaData metaData, int tickerId)
+        // {
+        //     return new DailyIndicator
+        //     {
+        //         TickerId = tickerId,
+        //         Atr = valueData,
+        //         Vwap = 0,
+        //         ClosePrice = decimal.Parse(valueData.Close),
+        //         HighPrice = decimal.Parse(valueData.High),
+        //         LowPrice = decimal.Parse(valueData.Low),
+        //         OpenPrice = decimal.Parse(valueData.Open),
+        //         TradingVolume = decimal.Parse(valueData.Volume),
+        //         Timestamp = valueData.Datetime
+        //     };
+        // }
     }
 }
