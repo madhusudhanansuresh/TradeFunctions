@@ -1,9 +1,4 @@
-using System.Globalization;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using AssessmentDeck.Services;
-using Microsoft.Azure.Functions.Worker.Extensions.Abstractions;
 using Microsoft.EntityFrameworkCore;
 using TradeFunctions.Models.Helpers;
 using TradeFunctions.Models.Postgres.TradeContext;
@@ -15,7 +10,6 @@ namespace TradeFunctions.ImportDailyIndicators
     {
         Task<bool> ImportATR(CancellationToken cancellationToken = default);
     }
-
 
     public class ImportDailyIndicatorsHandler : IImportDailyIndicatorsHandler
     {
@@ -44,12 +38,16 @@ namespace TradeFunctions.ImportDailyIndicators
 
                     var tickerId = await dbContext.Tickers.Where(x => x.TickerName == "AAPL").Select(x => x.Id).FirstOrDefaultAsync();
 
+                    dbContext.DailyIndicators.RemoveRange(dbContext.DailyIndicators);
+
+                    dbContext.SaveChanges();
+
                     foreach (var stockData in stockDataResponse.Data)
                     {
                         foreach (var value in stockData.Values)
                         {
-                         //   var stockPrice = MapToStockPrice(value, stockData.Meta, tickerId);
-                            //dbContext.StockPrices.Add(stockPrice);
+                            var dailyIndicator = MapToStockPrice(value, stockData.Meta, tickerId);
+                            dbContext.DailyIndicators.Add(dailyIndicator);
                         }
                     }
                     await dbContext.SaveChangesAsync(cancellationToken);
@@ -66,20 +64,14 @@ namespace TradeFunctions.ImportDailyIndicators
             }
         }
 
-        // private DailyIndicator MapToStockPrice(ValueData valueData, MetaData metaData, int tickerId)
-        // {
-        //     return new DailyIndicator
-        //     {
-        //         TickerId = tickerId,
-        //         Atr = valueData,
-        //         Vwap = 0,
-        //         ClosePrice = decimal.Parse(valueData.Close),
-        //         HighPrice = decimal.Parse(valueData.High),
-        //         LowPrice = decimal.Parse(valueData.Low),
-        //         OpenPrice = decimal.Parse(valueData.Open),
-        //         TradingVolume = decimal.Parse(valueData.Volume),
-        //         Timestamp = valueData.Datetime
-        //     };
-        // }
+        private DailyIndicator MapToStockPrice(ValueData valueData, MetaData metaData, int tickerId)
+        {
+            return new DailyIndicator
+            {
+                TickerId = tickerId,
+                Atr = valueData.ATR,
+                Timestamp = valueData.Datetime
+            };
+        }
     }
 }

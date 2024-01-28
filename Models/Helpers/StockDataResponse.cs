@@ -33,4 +33,5 @@ public class ValueData
     public string Low { get; set; }
     public string Close { get; set; }
     public string Volume { get; set; }
+    public Decimal ATR { get; set; }
 }

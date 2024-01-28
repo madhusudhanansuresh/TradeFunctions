@@ -13,6 +13,8 @@ public partial class DailyIndicator
 
     public DateTime? CreateDt { get; set; }
 
+    public DateTime? Timestamp { get; set; }
+
     public DateTime? LastUpdateDt { get; set; }
 
     public virtual Ticker Ticker { get; set; } = null!;

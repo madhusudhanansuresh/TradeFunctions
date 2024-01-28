@@ -7,6 +7,7 @@ using AssessmentDeck.Services;
 using TradeFunctions.ImportMarketData;
 using TradeFunctions.Services;
 using TradeFunctions.ImportDailyIndicators;
+using TradeFunctions.ListMarketStatistics;
 
 var host = new HostBuilder()
     .ConfigureFunctionsWorkerDefaults()
@@ -15,7 +16,8 @@ var host = new HostBuilder()
         services.AddApplicationInsightsTelemetryWorkerService();
         services.AddScoped<IDbConnectionStringService, DbConnectionStringService>();
         services.AddScoped<IImportMarketDataHandler, ImportMarketDataHandler>();
-         services.AddScoped<IImportDailyIndicatorsHandler, ImportDailyIndicatorsHandler>();
+        services.AddScoped<IImportDailyIndicatorsHandler, ImportDailyIndicatorsHandler>();
+        services.AddScoped<IListMarketStatisticsHandler, ListMarketStatisticsHandler>();
         services.AddScoped<ITwelveDataService, TwelveDataService>();
         var connectionString = Environment.GetEnvironmentVariable("TradeDatabase");
         services.AddDbContext<TradeContext>(options =>
