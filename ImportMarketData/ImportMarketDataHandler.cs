@@ -37,15 +37,17 @@ namespace TradeFunctions.ImportMarketData
                 using (var dbContext = new TradeContext(_dbConnectionStringService.ConnectionString()))
                 {
                     var timeFrame = "5min";
-                    var tickers = await dbContext.Tickers.Select(x => x.TickerName).Take(55).ToListAsync();
+                    var tickers = await dbContext.Tickers.Take(55).ToListAsync();
 
-                    var stockDataResponse = await _twelveDataService.FetchStockDataAsync(tickers, [timeFrame], "", "", 1, methodContainer);
+                    var tickerNames = tickers.Select(x => x.TickerName).ToList();
+
+                    var stockDataResponse = await _twelveDataService.FetchStockDataAsync(tickerNames, [timeFrame], "", "", 1, methodContainer);
                     
-                    var tickerId = await dbContext.Tickers.Where(x => x.TickerName == "AAPL").Select(x => x.Id).FirstOrDefaultAsync();
                     var chartId = await dbContext.ChartPeriods.Where(x => x.TimeFrame == timeFrame).Select(x => x.Id).FirstOrDefaultAsync();
 
                     foreach (var stockData in stockDataResponse.Data)
                     {
+                        var tickerId = tickers.Where(x => x.TickerName == stockData?.Meta?.Symbol).Select(x => x.Id).FirstOrDefault();
                         foreach (var value in stockData.Values)
                         {
                             var stockPrice = MapToStockPrice(value, stockData.Meta, tickerId, chartId);
