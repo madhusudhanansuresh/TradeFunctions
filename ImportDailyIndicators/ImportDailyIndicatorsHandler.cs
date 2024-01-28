@@ -38,21 +38,38 @@ namespace TradeFunctions.ImportDailyIndicators
                 using (var dbContext = new TradeContext(_dbConnectionStringService.ConnectionString()))
                 {
                     var timeFrame = "1day";
-                    _logger.LogInformation("Retrieving tickers.");
                     var tickers = await dbContext.Tickers.Select(x => x.TickerName).Take(55).ToListAsync();
 
                     _logger.LogInformation($"Fetching stock data for tickers: {string.Join(", ", tickers)}.");
                     var stockDataResponse = await _twelveDataService.FetchStockDataAsync(tickers, [timeFrame], "", "", 1, methodContainer);
 
-                    _logger.LogInformation("Processing stock data response.");
                     var tickerId = await dbContext.Tickers.Where(x => x.TickerName == "AAPL").Select(x => x.Id).FirstOrDefaultAsync();
 
                     dbContext.DailyIndicators.RemoveRange(dbContext.DailyIndicators);
                     dbContext.SaveChanges();
 
-                    foreach (var stockData in stockDataResponse.Data)
+                    // Assuming stockDataResponse or its properties could be null.
+                    if (stockDataResponse?.Data == null)
                     {
-                        foreach (var value in stockData.Values)
+                        _logger.LogWarning("stockDataResponse or its Data is null.");
+                        return false; // Or handle accordingly.
+                    }
+
+                    foreach (var stockData in stockDataResponse?.Data)
+                    {
+
+                        if (stockData == null)
+                        {
+                            _logger.LogWarning("Encountered a null stockData in the collection.");
+                            continue; // Skip this iteration.
+                        }
+
+                        if (stockData.Values == null)
+                        {
+                            _logger.LogWarning("Values in stockData is null. Meta: {Meta}", stockData.Meta);
+                            continue; // Skip this iteration.
+                        }
+                        foreach (var value in stockData?.Values)
                         {
                             var dailyIndicator = MapToStockPrice(value, stockData.Meta, tickerId);
                             dbContext.DailyIndicators.Add(dailyIndicator);
@@ -76,8 +93,8 @@ namespace TradeFunctions.ImportDailyIndicators
             return new DailyIndicator
             {
                 TickerId = tickerId,
-                Atr = valueData.ATR,
-                Timestamp = valueData.Datetime
+                Atr = valueData?.ATR,
+                Timestamp = valueData?.Datetime
             };
         }
     }
