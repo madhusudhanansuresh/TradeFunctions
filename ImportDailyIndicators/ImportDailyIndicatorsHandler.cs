@@ -39,10 +39,10 @@ namespace TradeFunctions.ImportDailyIndicators
                 {
                     var timeFrame = "1day";
                     _logger.LogInformation("Retrieving tickers.");
-                    var tickers = await dbContext.Tickers.Select(x => x.TickerName).Take(1).ToListAsync();
+                    var tickers = await dbContext.Tickers.Select(x => x.TickerName).Take(55).ToListAsync();
 
                     _logger.LogInformation($"Fetching stock data for tickers: {string.Join(", ", tickers)}.");
-                    var stockDataResponse = await _twelveDataService.FetchStockDataAsync(["AAPL"], [timeFrame], "", "", 1, methodContainer);
+                    var stockDataResponse = await _twelveDataService.FetchStockDataAsync(tickers, [timeFrame], "", "", 1, methodContainer);
 
                     _logger.LogInformation("Processing stock data response.");
                     var tickerId = await dbContext.Tickers.Where(x => x.TickerName == "AAPL").Select(x => x.Id).FirstOrDefaultAsync();

@@ -37,9 +37,9 @@ namespace TradeFunctions.ImportMarketData
                 using (var dbContext = new TradeContext(_dbConnectionStringService.ConnectionString()))
                 {
                     var timeFrame = "5min";
-                    var tickers = await dbContext.Tickers.Select(x => x.TickerName).Take(1).ToListAsync();
+                    var tickers = await dbContext.Tickers.Select(x => x.TickerName).Take(55).ToListAsync();
 
-                    var stockDataResponse = await _twelveDataService.FetchStockDataAsync(["AAPL"], [timeFrame], "", "", 1, methodContainer);
+                    var stockDataResponse = await _twelveDataService.FetchStockDataAsync(tickers, [timeFrame], "", "", 1, methodContainer);
                     
                     var tickerId = await dbContext.Tickers.Where(x => x.TickerName == "AAPL").Select(x => x.Id).FirstOrDefaultAsync();
                     var chartId = await dbContext.ChartPeriods.Where(x => x.TimeFrame == timeFrame).Select(x => x.Id).FirstOrDefaultAsync();
