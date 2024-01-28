@@ -15,7 +15,7 @@ namespace TradeFunctions.Services
     public class TwelveDataService : ITwelveDataService
     {
         private readonly HttpClient _client;
-        private readonly string _apiKey = "2ef41161b845412cb5a6ccc83b2ca317"; // Securely retrieve this
+        private readonly string _apiKey = "c0ab0a8407ed42e4a89605bc8077e141"; // Securely retrieve this
         public TwelveDataService()
         {
             _client = new HttpClient();
