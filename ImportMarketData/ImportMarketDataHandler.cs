@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using AssessmentDeck.Services;
 using Microsoft.Azure.Functions.Worker.Extensions.Abstractions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using TradeFunctions.Models.Helpers;
 using TradeFunctions.Models.Postgres.TradeContext;
 using TradeFunctions.Services;
@@ -19,11 +20,13 @@ namespace TradeFunctions.ImportMarketData
 
     public class ImportMarketDataHandler : IImportMarketDataHandler
     {
+        private readonly ILogger _logger;
         private readonly ITwelveDataService _twelveDataService;
         public IDbConnectionStringService _dbConnectionStringService { get; }
 
-        public ImportMarketDataHandler(IDbConnectionStringService dbConnectionStringService, ITwelveDataService twelveDataService)
+        public ImportMarketDataHandler(ILoggerFactory loggerFactory, IDbConnectionStringService dbConnectionStringService, ITwelveDataService twelveDataService)
         {
+            _logger = loggerFactory.CreateLogger<ImportMarketDataHandler>();
             _dbConnectionStringService = dbConnectionStringService;
             _twelveDataService = twelveDataService;
         }
@@ -42,12 +45,23 @@ namespace TradeFunctions.ImportMarketData
                     var tickerNames = tickers.Select(x => x.TickerName).ToList();
 
                     var stockDataResponse = await _twelveDataService.FetchStockDataAsync(tickerNames, [timeFrame], "", "", 1, methodContainer);
-                    
+
                     var chartId = await dbContext.ChartPeriods.Where(x => x.TimeFrame == timeFrame).Select(x => x.Id).FirstOrDefaultAsync();
 
                     foreach (var stockData in stockDataResponse.Data)
                     {
                         var tickerId = tickers.Where(x => x.TickerName == stockData?.Meta?.Symbol).Select(x => x.Id).FirstOrDefault();
+                        if (stockData == null)
+                        {
+                            _logger.LogWarning("Encountered a null stockData in the collection.");
+                            continue; // Skip this iteration.
+                        }
+
+                        if (stockData.Values == null)
+                        {
+                            _logger.LogWarning("Values in stockData is null. Meta: {Meta}", stockData.Meta);
+                            continue; // Skip this iteration.
+                        }
                         foreach (var value in stockData.Values)
                         {
                             var stockPrice = MapToStockPrice(value, stockData.Meta, tickerId, chartId);
@@ -76,13 +90,13 @@ namespace TradeFunctions.ImportMarketData
                 TickerId = tickerId,
                 ChartId = chartId,
                 TransactionCount = 0,
-                Vwap = 0,                
+                Vwap = 0,
                 ClosePrice = decimal.Parse(valueData.Close),
                 HighPrice = decimal.Parse(valueData.High),
                 LowPrice = decimal.Parse(valueData.Low),
                 OpenPrice = decimal.Parse(valueData.Open),
                 TradingVolume = decimal.Parse(valueData.Volume),
-               // Timestamp = Convert.ToDateTime(valueData.Datetime),
+                // Timestamp = Convert.ToDateTime(valueData.Datetime),
                 Timestamp = valueData.Datetime
             };
         }

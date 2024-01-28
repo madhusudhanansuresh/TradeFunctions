@@ -21,7 +21,7 @@ namespace TradeFunctions.ImportDailyIndicators
 
         public ImportDailyIndicatorsHandler(ILoggerFactory loggerFactory, IDbConnectionStringService dbConnectionStringService, ITwelveDataService twelveDataService)
         {
-            _logger = loggerFactory.CreateLogger<ImportDailyIndicatorsController>();
+            _logger = loggerFactory.CreateLogger<ImportDailyIndicatorsHandler>();
             _dbConnectionStringService = dbConnectionStringService;
             _twelveDataService = twelveDataService;
         }

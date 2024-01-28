@@ -23,6 +23,7 @@ namespace TradeFunctions.ImportMarketData
             TimeZoneInfo estZone = TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time");
             DateTime estTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, estZone);
 
+
             // Check if current EST time is within the desired range (8:00 AM to 5:00 PM)
             if (estTime.Hour >= 8 && estTime.Hour < 17)
             {
