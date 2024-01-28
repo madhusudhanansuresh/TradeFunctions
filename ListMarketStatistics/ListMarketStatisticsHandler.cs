@@ -31,6 +31,7 @@ namespace TradeFunctions.ListMarketStatistics
         {
             try
             {
+                List<MarketStatistics> listMarketStatistics = new List<MarketStatistics>();
                 using (var dbContext = new TradeContext(_dbConnectionStringService.ConnectionString()))
                 {
                     var twentyTwoDaysAgo = DateTime.Now.AddDays(-22);
@@ -49,7 +50,7 @@ namespace TradeFunctions.ListMarketStatistics
                         var tickerPrices = stockPrices.Where(x => x.TickerId == ticker.Id).ToList();
                         var tickerAtr = await dbContext.DailyIndicators.Where(x => x.TickerId == ticker.Id).Select(x => x.Atr).FirstOrDefaultAsync();
 
-                        var listMarketStatisticsResponse = new ListMarketStatisticsResponse
+                        var marketStatistics = new MarketStatistics
                         {
                             Ticker = ticker.TickerName,
                             ATR = tickerAtr,
@@ -68,10 +69,12 @@ namespace TradeFunctions.ListMarketStatistics
                             SixHour = new() { Rvol = CalculateRVOL("6Hour", tickerPrices), RsRw = CalculateRelativeStrength("6Hour", tickerPrices, spyPrices, spyAtr, tickerAtr) },
                             SevenHour = new() { Rvol = CalculateRVOL("7Hour", tickerPrices), RsRw = CalculateRelativeStrength("7Hour", tickerPrices, spyPrices, spyAtr, tickerAtr) },
                         };
+
+                        listMarketStatistics.Add(marketStatistics);
                     }
                 }
 
-                return null;
+                return new ListMarketStatisticsResponse { ListMarketStatistics = listMarketStatistics };
             }
             catch (Exception ex)
             {

@@ -2,6 +2,11 @@ namespace TradeFunctions.ListMarketStatistics
 {
     public class ListMarketStatisticsResponse
     {
+        public List<MarketStatistics> ListMarketStatistics { get; set; }
+    }
+
+    public class MarketStatistics
+    {
         public string Ticker { get; set; }
         public decimal? ATR { get; set; }
         public Statistics FiveMin { get; set; }
@@ -18,6 +23,7 @@ namespace TradeFunctions.ListMarketStatistics
         public Statistics FiveHour { get; set; }
         public Statistics SixHour { get; set; }
         public Statistics SevenHour { get; set; }
+
     }
 
     public class Statistics
