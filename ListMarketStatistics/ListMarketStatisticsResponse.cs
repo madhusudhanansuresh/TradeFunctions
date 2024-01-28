@@ -32,3 +32,4 @@ namespace TradeFunctions.ListMarketStatistics
         public decimal? RsRw { get; set; }
     }
 }
+//    "TradeDatabase":"Host=devtradepostgres.postgres.database.azure.com;Database=postgres;Username=postgres_admin;Password=Sql-4567"
