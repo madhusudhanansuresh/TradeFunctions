@@ -38,12 +38,13 @@ namespace TradeFunctions.ImportDailyIndicators
                 using (var dbContext = new TradeContext(_dbConnectionStringService.ConnectionString()))
                 {
                     var timeFrame = "1day";
-                    var tickers = await dbContext.Tickers.Select(x => x.TickerName).Take(55).ToListAsync();
+                    var tickers = await dbContext.Tickers.Take(55).ToListAsync();
+
+                    var tickerNames = tickers.Select(x => x.TickerName).ToList();
 
                     _logger.LogInformation($"Fetching stock data for tickers: {string.Join(", ", tickers)}.");
-                    var stockDataResponse = await _twelveDataService.FetchStockDataAsync(tickers, [timeFrame], "", "", 1, methodContainer);
+                    var stockDataResponse = await _twelveDataService.FetchStockDataAsync(tickerNames, [timeFrame], "", "", 1, methodContainer);
 
-                    var tickerId = await dbContext.Tickers.Where(x => x.TickerName == "AAPL").Select(x => x.Id).FirstOrDefaultAsync();
 
                     dbContext.DailyIndicators.RemoveRange(dbContext.DailyIndicators);
                     dbContext.SaveChanges();
@@ -57,6 +58,7 @@ namespace TradeFunctions.ImportDailyIndicators
 
                     foreach (var stockData in stockDataResponse?.Data)
                     {
+                         var tickerId = tickers.Where(x => x.TickerName == stockData?.Meta?.Symbol).Select(x => x.Id).FirstOrDefault();
 
                         if (stockData == null)
                         {
@@ -71,6 +73,7 @@ namespace TradeFunctions.ImportDailyIndicators
                         }
                         foreach (var value in stockData?.Values)
                         {
+                           
                             var dailyIndicator = MapToStockPrice(value, stockData.Meta, tickerId);
                             dbContext.DailyIndicators.Add(dailyIndicator);
                         }
