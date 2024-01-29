@@ -17,7 +17,7 @@ namespace TradeFunctions.ImportMarketData
         }
 
         [Function("ImportMarketData")]
-        public void Run([TimerTrigger("0 */5 13-21 * * 1-5")] TimerInfo myTimer)
+        public void Run([TimerTrigger("1 */5 13-21 * * 1-5")] TimerInfo myTimer)
         {
             _logger.LogInformation($"C# Timer trigger function executed at: {DateTime.Now}");
             TimeZoneInfo estZone = TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time");
