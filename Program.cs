@@ -8,6 +8,7 @@ using TradeFunctions.ImportMarketData;
 using TradeFunctions.Services;
 using TradeFunctions.ImportDailyIndicators;
 using TradeFunctions.ListMarketStatistics;
+using System.Text.Json;
 
 var host = new HostBuilder()
     .ConfigureFunctionsWorkerDefaults()
@@ -22,6 +23,12 @@ var host = new HostBuilder()
         var connectionString = Environment.GetEnvironmentVariable("TradeDatabase");
         services.AddDbContext<TradeContext>(options =>
             options.UseNpgsql(connectionString));
+        services.AddOptions<JsonSerializerOptions>()
+                .Configure(options =>
+                {
+                    options.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+                    options.PropertyNameCaseInsensitive = true;
+                });
 
         // Add DbContext configuration
         // var connectionString = hostContext.Configuration.GetConnectionString("TradeDatabase") ??
