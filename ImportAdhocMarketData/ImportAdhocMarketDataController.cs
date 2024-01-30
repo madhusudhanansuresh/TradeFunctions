@@ -24,6 +24,11 @@ namespace TradeFunctions.ImportMarketData
         {
             try
             {
+                var options = new JsonSerializerOptions
+                {
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                    PropertyNameCaseInsensitive = true
+                };
                 string requestBody = await new StreamReader(request.Body).ReadToEndAsync();
                 var importRequest = JsonSerializer.Deserialize<ImportAdhocMarketDataRequest>(requestBody);
 
@@ -53,3 +58,11 @@ namespace TradeFunctions.ImportMarketData
         }
     }
 }
+
+//Request
+// {
+//     "symbols": [],
+//     "intervals": ["5min"],
+//     "startDate": "2024-01-04 00:00:00",
+//     "endDate": "2024-01-30 00:00:00"
+// }

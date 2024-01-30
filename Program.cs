@@ -19,16 +19,12 @@ var host = new HostBuilder()
         services.AddScoped<IImportMarketDataHandler, ImportMarketDataHandler>();
         services.AddScoped<IImportDailyIndicatorsHandler, ImportDailyIndicatorsHandler>();
         services.AddScoped<IListMarketStatisticsHandler, ListMarketStatisticsHandler>();
+        services.AddScoped<IImportAdhocMarketDataHandler, ImportAdhocMarketDataHandler>();
         services.AddScoped<ITwelveDataService, TwelveDataService>();
         var connectionString = Environment.GetEnvironmentVariable("TradeDatabase");
         services.AddDbContext<TradeContext>(options =>
             options.UseNpgsql(connectionString));
-        services.AddOptions<JsonSerializerOptions>()
-                .Configure(options =>
-                {
-                    options.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
-                    options.PropertyNameCaseInsensitive = true;
-                });
+
 
         // Add DbContext configuration
         // var connectionString = hostContext.Configuration.GetConnectionString("TradeDatabase") ??
