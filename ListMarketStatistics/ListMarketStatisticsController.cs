@@ -20,11 +20,13 @@ namespace TradeFunctions.ListMarketStatistics
         }
 
         [Function("marketStatistics")]
-        public IActionResult Run([HttpTrigger(AuthorizationLevel.Function, "post")] HttpRequestData request)
+        public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Function, "post")] HttpRequestData request)
         {
             _logger.LogInformation("C# HTTP trigger function processed a request.");
 
-            return new OkObjectResult(_listMarketStatisticsHandler.ListStatistics());
+           var data = await _listMarketStatisticsHandler.ListStatistics();
+
+            return new OkObjectResult(data);
         }
     }
 }

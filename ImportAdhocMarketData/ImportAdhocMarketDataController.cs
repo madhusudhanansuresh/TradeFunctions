@@ -30,9 +30,9 @@ namespace TradeFunctions.ImportMarketData
                     PropertyNameCaseInsensitive = true
                 };
                 string requestBody = await new StreamReader(request.Body).ReadToEndAsync();
-                var importRequest = JsonSerializer.Deserialize<ImportAdhocMarketDataRequest>(requestBody);
+                var importRequest = JsonSerializer.Deserialize<ImportAdhocMarketDataRequest>(requestBody, options);
 
-                _importMarketData.ImportMarketData(importRequest);
+                await _importMarketData.ImportMarketData(importRequest);
 
                 var response = request.CreateResponse(HttpStatusCode.OK);
                 response.Headers.Add("Content-Type", "text/plain; charset=utf-8");
