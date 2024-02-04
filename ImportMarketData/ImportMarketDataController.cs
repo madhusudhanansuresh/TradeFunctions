@@ -24,8 +24,8 @@ namespace TradeFunctions.ImportMarketData
             DateTime estTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, estZone);
 
 
-            // Check if current EST time is within the desired range (8:00 AM to 5:00 PM)
-            if (estTime.Hour >= 8 && estTime.Hour < 17)
+            // Check if current EST time is within the desired range (9:30 AM to 4:00 PM)
+            if ((estTime.Hour == 9 && estTime.Minute >= 30) || (estTime.Hour > 9 && estTime.Hour < 16) || (estTime.Hour == 16 && estTime.Minute == 0))
             {
                 _importMarketData.ImportMarketData();
             }
@@ -33,6 +33,7 @@ namespace TradeFunctions.ImportMarketData
             {
                 _logger.LogInformation($"Skipping execution, outside schedule hours EST: {estTime}");
             }
+
 
             if (myTimer.ScheduleStatus is not null)
             {
