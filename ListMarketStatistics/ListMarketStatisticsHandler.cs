@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Globalization;
 using System.Linq;
 using System.Threading;
@@ -34,47 +35,49 @@ namespace TradeFunctions.ListMarketStatistics
                 List<MarketStatistics> listMarketStatistics = new List<MarketStatistics>();
                 using (var dbContext = new TradeContext(_dbConnectionStringService.ConnectionString()))
                 {
-                    var twentyTwoDaysAgo = DateTime.Now.AddDays(-22);
+                    var thirtyDaysAgo = DateTime.Now.AddDays(-30);
 
                     var tickers = await dbContext.Tickers.ToListAsync();
 
-                    var stockPrices = await dbContext.StockPrices.Where(x => x.Timestamp >= twentyTwoDaysAgo).ToListAsync();
+                    var stockPrices = await dbContext.StockPrices.Where(x => x.Timestamp >= thirtyDaysAgo).ToListAsync();
 
                     var spyPrices = stockPrices.Where(x => x.TickerId == 529).ToList();
 
-                    var spyAtr = await dbContext.DailyIndicators.Where(x => x.TickerId == 529).Select(x => x.Atr).FirstOrDefaultAsync();
+                    var tickerAtrs = await dbContext.DailyIndicators.ToDictionaryAsync(di => di.TickerId, di => di.Atr, cancellationToken);
+                    var parallelOptions = new ParallelOptions { CancellationToken = cancellationToken, MaxDegreeOfParallelism = Environment.ProcessorCount };
+                    var concurrentListMarketStatistics = new ConcurrentBag<MarketStatistics>();
 
+                    Parallel.ForEach(tickers, parallelOptions, ticker =>
+                       {
+                           var tickerPrices = stockPrices.Where(x => x.TickerId == ticker.Id).ToList();
+                           tickerAtrs.TryGetValue(ticker.Id, out var tickerAtr);
+                           var spyAtr = tickerAtrs.TryGetValue(529, out var sa) ? sa : null;
 
-                    foreach (var ticker in tickers)
-                    {
-                        var tickerPrices = stockPrices.Where(x => x.TickerId == ticker.Id).ToList();
-                        var tickerAtr = await dbContext.DailyIndicators.Where(x => x.TickerId == ticker.Id).Select(x => x.Atr).FirstOrDefaultAsync();
+                           if (tickerPrices.Any())
+                           {
+                               var marketStatistics = new MarketStatistics
+                               {
+                                   Ticker = ticker.TickerName,
+                                   ATR = tickerAtr.HasValue ? Math.Round(tickerAtr.Value, 2) : (decimal?)null,
+                                   FiveMin = new() { Rvol = CalculateRVOL("5Min", tickerPrices), RsRw = CalculateRelativeStrength("5Min", tickerPrices, spyPrices, spyAtr, tickerAtr) },
+                                   TenMin = new() { Rvol = CalculateRVOL("10Min", tickerPrices), RsRw = CalculateRelativeStrength("10Min", tickerPrices, spyPrices, spyAtr, tickerAtr) },
+                                   FifteenMin = new() { Rvol = CalculateRVOL("15Min", tickerPrices), RsRw = CalculateRelativeStrength("15Min", tickerPrices, spyPrices, spyAtr, tickerAtr) },
+                                   TwentyMin = new() { Rvol = CalculateRVOL("20Min", tickerPrices), RsRw = CalculateRelativeStrength("20Min", tickerPrices, spyPrices, spyAtr, tickerAtr) },
+                                   TwentyFiveMin = new() { Rvol = CalculateRVOL("25Min", tickerPrices), RsRw = CalculateRelativeStrength("25Min", tickerPrices, spyPrices, spyAtr, tickerAtr) },
+                                   ThirtyMin = new() { Rvol = CalculateRVOL("30Min", tickerPrices), RsRw = CalculateRelativeStrength("30Min", tickerPrices, spyPrices, spyAtr, tickerAtr) },
+                                   FortyFiveMin = new() { Rvol = CalculateRVOL("45Min", tickerPrices), RsRw = CalculateRelativeStrength("45Min", tickerPrices, spyPrices, spyAtr, tickerAtr) },
+                                   OneHour = new() { Rvol = CalculateRVOL("1Hour", tickerPrices), RsRw = CalculateRelativeStrength("1Hour", tickerPrices, spyPrices, spyAtr, tickerAtr) },
+                                   TwoHour = new() { Rvol = CalculateRVOL("2Hour", tickerPrices), RsRw = CalculateRelativeStrength("2Hour", tickerPrices, spyPrices, spyAtr, tickerAtr) },
+                                   ThreeHour = new() { Rvol = CalculateRVOL("3Hour", tickerPrices), RsRw = CalculateRelativeStrength("3Hour", tickerPrices, spyPrices, spyAtr, tickerAtr) },
+                                   FourHour = new() { Rvol = CalculateRVOL("4Hour", tickerPrices), RsRw = CalculateRelativeStrength("4Hour", tickerPrices, spyPrices, spyAtr, tickerAtr) },
+                                   FiveHour = new() { Rvol = CalculateRVOL("5Hour", tickerPrices), RsRw = CalculateRelativeStrength("5Hour", tickerPrices, spyPrices, spyAtr, tickerAtr) },
+                                   SixHour = new() { Rvol = CalculateRVOL("6Hour", tickerPrices), RsRw = CalculateRelativeStrength("6Hour", tickerPrices, spyPrices, spyAtr, tickerAtr) },
+                                   SevenAndHalfHours = new() { Rvol = CalculateRVOL("7AndHalfHour", tickerPrices), RsRw = CalculateRelativeStrength("7AndHalfHour", tickerPrices, spyPrices, spyAtr, tickerAtr) },
+                                };
 
-                        if (tickerPrices.Any())
-                        {
-                            var marketStatistics = new MarketStatistics
-                            {
-                                Ticker = ticker.TickerName,
-                                ATR = tickerAtr,
-                                FiveMin = new() { Rvol = CalculateRVOL("5Min", tickerPrices), RsRw = CalculateRelativeStrength("5Min", tickerPrices, spyPrices, spyAtr, tickerAtr) },
-                                TenMin = new() { Rvol = CalculateRVOL("10Min", tickerPrices), RsRw = CalculateRelativeStrength("10Min", tickerPrices, spyPrices, spyAtr, tickerAtr) },
-                                FifteenMin = new() { Rvol = CalculateRVOL("15Min", tickerPrices), RsRw = CalculateRelativeStrength("15Min", tickerPrices, spyPrices, spyAtr, tickerAtr) },
-                                TwentyMin = new() { Rvol = CalculateRVOL("20Min", tickerPrices), RsRw = CalculateRelativeStrength("20Min", tickerPrices, spyPrices, spyAtr, tickerAtr) },
-                                TwentyFiveMin = new() { Rvol = CalculateRVOL("25Min", tickerPrices), RsRw = CalculateRelativeStrength("25Min", tickerPrices, spyPrices, spyAtr, tickerAtr) },
-                                ThirtyMin = new() { Rvol = CalculateRVOL("30Min", tickerPrices), RsRw = CalculateRelativeStrength("30Min", tickerPrices, spyPrices, spyAtr, tickerAtr) },
-                                FortyFiveMin = new() { Rvol = CalculateRVOL("45Min", tickerPrices), RsRw = CalculateRelativeStrength("45Min", tickerPrices, spyPrices, spyAtr, tickerAtr) },
-                                OneHour = new() { Rvol = CalculateRVOL("1Hour", tickerPrices), RsRw = CalculateRelativeStrength("1Hour", tickerPrices, spyPrices, spyAtr, tickerAtr) },
-                                TwoHour = new() { Rvol = CalculateRVOL("2Hour", tickerPrices), RsRw = CalculateRelativeStrength("2Hour", tickerPrices, spyPrices, spyAtr, tickerAtr) },
-                                // ThreeHour = new() { Rvol = CalculateRVOL("3Hour", tickerPrices), RsRw = CalculateRelativeStrength("3Hour", tickerPrices, spyPrices, spyAtr, tickerAtr) },
-                                // FourHour = new() { Rvol = CalculateRVOL("4Hour", tickerPrices), RsRw = CalculateRelativeStrength("4Hour", tickerPrices, spyPrices, spyAtr, tickerAtr) },
-                                // FiveHour = new() { Rvol = CalculateRVOL("5Hour", tickerPrices), RsRw = CalculateRelativeStrength("5Hour", tickerPrices, spyPrices, spyAtr, tickerAtr) },
-                                // SixHour = new() { Rvol = CalculateRVOL("6Hour", tickerPrices), RsRw = CalculateRelativeStrength("6Hour", tickerPrices, spyPrices, spyAtr, tickerAtr) },
-                                // SevenHour = new() { Rvol = CalculateRVOL("7Hour", tickerPrices), RsRw = CalculateRelativeStrength("7Hour", tickerPrices, spyPrices, spyAtr, tickerAtr) },
-                            };
-
-                            listMarketStatistics.Add(marketStatistics);
-                        }
-                    }
+                               listMarketStatistics.Add(marketStatistics);
+                           }
+                       });
                 }
 
                 return new ListMarketStatisticsResponse { ListMarketStatistics = listMarketStatistics };
@@ -124,7 +127,8 @@ namespace TradeFunctions.ListMarketStatistics
                 decimal? atrAdjustmentFactor = stockAtr / spyAtr;
                 decimal? adjustedRelativeStrength = relativeStrength / atrAdjustmentFactor;
 
-                return adjustedRelativeStrength;
+                return adjustedRelativeStrength.HasValue ? Math.Round(adjustedRelativeStrength.Value, 2) : (decimal?)null;
+
             }
             catch (Exception ex)
             {
@@ -152,11 +156,14 @@ namespace TradeFunctions.ListMarketStatistics
                 var endTimeStamp = lastPrice.Timestamp; // Last known timestamp, no need for Nullable.
                 var startTimeStamp = TimeframeStart(timeFrame, endTimeStamp); // Assume this returns a DateTime not nullable, or handle nullability inside TimeframeStart.
 
+                // var test = tickerPrices
+                //                     .Where(x => x.Timestamp >= startTimeStamp && x.Timestamp <= endTimeStamp);
+
                 var sumOfVolume = tickerPrices
                                     .Where(x => x.Timestamp >= startTimeStamp && x.Timestamp <= endTimeStamp)
                                     .Sum(x => x.TradingVolume ?? 0);
 
-                while (daysWithData < 14 && totalDaysChecked < 22)
+                while (daysWithData < 15 && totalDaysChecked < 30)
                 {
                     // Ensure we have a non-nullable DateTime to work with
                     var nonNullableStartTimeStamp = startTimeStamp.GetValueOrDefault();
@@ -176,9 +183,12 @@ namespace TradeFunctions.ListMarketStatistics
                     }
                     totalDaysChecked++;
                 }
-
+                if (volumesByDay.Count > 0)
+                {
+                    volumesByDay.RemoveAt(0);
+                }
                 decimal? result = volumesByDay.Sum() == 0 ? 0 : sumOfVolume / (volumesByDay.Sum() / 14);
-                return result;
+                return result.HasValue ? Math.Round(result.Value, 2) : (decimal?)null;
             }
             catch (Exception ex)
             {
@@ -196,46 +206,46 @@ namespace TradeFunctions.ListMarketStatistics
             switch (timeFrame)
             {
                 case "5Min":
-                    minutesBack = 5;
+                    minutesBack = 0;
                     break;
                 case "10Min":
-                    minutesBack = 10;
+                    minutesBack = 5;
                     break;
                 case "15Min":
-                    minutesBack = 15;
+                    minutesBack = 10;
                     break;
                 case "20Min":
-                    minutesBack = 20;
+                    minutesBack = 15;
                     break;
                 case "25Min":
-                    minutesBack = 25;
+                    minutesBack = 20;
                     break;
                 case "30Min":
-                    minutesBack = 30;
+                    minutesBack = 25;
                     break;
                 case "45Min":
-                    minutesBack = 45;
+                    minutesBack = 40;
                     break;
                 case "1Hour":
-                    minutesBack = 60;
+                    minutesBack = 55;
                     break;
                 case "2Hour":
-                    minutesBack = 120;
+                    minutesBack = 115;
                     break;
                 case "3Hour":
-                    minutesBack = 180;
+                    minutesBack = 175;
                     break;
                 case "4Hour":
-                    minutesBack = 240;
+                    minutesBack = 235;
                     break;
                 case "5Hour":
-                    minutesBack = 300;
+                    minutesBack = 295;
                     break;
                 case "6Hour":
-                    minutesBack = 360;
+                    minutesBack = 355;
                     break;
-                case "7hour":
-                    minutesBack = 420;
+                case "7AndHalfHour":
+                    minutesBack = 385;
                     break;
                 default:
                     throw new ArgumentException("Invalid time frame");

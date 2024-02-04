@@ -22,7 +22,7 @@ namespace TradeFunctions.ListMarketStatistics
         public Statistics FourHour { get; set; }
         public Statistics FiveHour { get; set; }
         public Statistics SixHour { get; set; }
-        public Statistics SevenHour { get; set; }
+        public Statistics SevenAndHalfHours { get; set; }
 
     }
 
@@ -32,4 +32,3 @@ namespace TradeFunctions.ListMarketStatistics
         public decimal? RsRw { get; set; }
     }
 }
-//    "TradeDatabase":"Host=devtradepostgres.postgres.database.azure.com;Database=postgres;Username=postgres_admin;Password=Sql-4567"
