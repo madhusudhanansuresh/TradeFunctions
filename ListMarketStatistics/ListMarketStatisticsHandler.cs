@@ -63,16 +63,16 @@ namespace TradeFunctions.ListMarketStatistics
                                    TenMin = new() { Rvol = CalculateRVOL("10Min", tickerPrices), RsRw = CalculateRelativeStrength("10Min", tickerPrices, spyPrices, spyAtr, tickerAtr) },
                                    FifteenMin = new() { Rvol = CalculateRVOL("15Min", tickerPrices), RsRw = CalculateRelativeStrength("15Min", tickerPrices, spyPrices, spyAtr, tickerAtr) },
                                    TwentyMin = new() { Rvol = CalculateRVOL("20Min", tickerPrices), RsRw = CalculateRelativeStrength("20Min", tickerPrices, spyPrices, spyAtr, tickerAtr) },
-                                   TwentyFiveMin = new() { Rvol = CalculateRVOL("25Min", tickerPrices), RsRw = CalculateRelativeStrength("25Min", tickerPrices, spyPrices, spyAtr, tickerAtr) },
+                                   //TwentyFiveMin = new() { Rvol = CalculateRVOL("25Min", tickerPrices), RsRw = CalculateRelativeStrength("25Min", tickerPrices, spyPrices, spyAtr, tickerAtr) },
                                    ThirtyMin = new() { Rvol = CalculateRVOL("30Min", tickerPrices), RsRw = CalculateRelativeStrength("30Min", tickerPrices, spyPrices, spyAtr, tickerAtr) },
                                    FortyFiveMin = new() { Rvol = CalculateRVOL("45Min", tickerPrices), RsRw = CalculateRelativeStrength("45Min", tickerPrices, spyPrices, spyAtr, tickerAtr) },
                                    OneHour = new() { Rvol = CalculateRVOL("1Hour", tickerPrices), RsRw = CalculateRelativeStrength("1Hour", tickerPrices, spyPrices, spyAtr, tickerAtr) },
                                    TwoHour = new() { Rvol = CalculateRVOL("2Hour", tickerPrices), RsRw = CalculateRelativeStrength("2Hour", tickerPrices, spyPrices, spyAtr, tickerAtr) },
-                                   ThreeHour = new() { Rvol = CalculateRVOL("3Hour", tickerPrices), RsRw = CalculateRelativeStrength("3Hour", tickerPrices, spyPrices, spyAtr, tickerAtr) },
+                                   //ThreeHour = new() { Rvol = CalculateRVOL("3Hour", tickerPrices), RsRw = CalculateRelativeStrength("3Hour", tickerPrices, spyPrices, spyAtr, tickerAtr) },
                                    FourHour = new() { Rvol = CalculateRVOL("4Hour", tickerPrices), RsRw = CalculateRelativeStrength("4Hour", tickerPrices, spyPrices, spyAtr, tickerAtr) },
-                                   FiveHour = new() { Rvol = CalculateRVOL("5Hour", tickerPrices), RsRw = CalculateRelativeStrength("5Hour", tickerPrices, spyPrices, spyAtr, tickerAtr) },
-                                   SixHour = new() { Rvol = CalculateRVOL("6Hour", tickerPrices), RsRw = CalculateRelativeStrength("6Hour", tickerPrices, spyPrices, spyAtr, tickerAtr) },
-                                   SevenAndHalfHours = new() { Rvol = CalculateRVOL("7AndHalfHour", tickerPrices), RsRw = CalculateRelativeStrength("7AndHalfHour", tickerPrices, spyPrices, spyAtr, tickerAtr) },
+                                   //FiveHour = new() { Rvol = CalculateRVOL("5Hour", tickerPrices), RsRw = CalculateRelativeStrength("5Hour", tickerPrices, spyPrices, spyAtr, tickerAtr) },
+                                   //SixHour = new() { Rvol = CalculateRVOL("6Hour", tickerPrices), RsRw = CalculateRelativeStrength("6Hour", tickerPrices, spyPrices, spyAtr, tickerAtr) },
+                                   //SevenAndHalfHours = new() { Rvol = CalculateRVOL("7AndHalfHour", tickerPrices), RsRw = CalculateRelativeStrength("7AndHalfHour", tickerPrices, spyPrices, spyAtr, tickerAtr) },
                                 };
 
                                listMarketStatistics.Add(marketStatistics);
@@ -187,7 +187,7 @@ namespace TradeFunctions.ListMarketStatistics
                 {
                     volumesByDay.RemoveAt(0);
                 }
-                decimal? result = volumesByDay.Sum() == 0 ? 0 : sumOfVolume / (volumesByDay.Sum() / 14);
+                decimal? result = volumesByDay.Sum() == 0 ? 0 : sumOfVolume / (volumesByDay.Sum() / 14) * 100;
                 return result.HasValue ? Math.Round(result.Value, 2) : (decimal?)null;
             }
             catch (Exception ex)
