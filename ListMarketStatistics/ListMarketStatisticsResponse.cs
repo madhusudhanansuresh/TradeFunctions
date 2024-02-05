@@ -1,46 +1,47 @@
+using System.Text.Json.Serialization;
 using Newtonsoft.Json;
 
 namespace TradeFunctions.ListMarketStatistics
 {
     public class ListMarketStatisticsResponse
     {
-        [JsonProperty("listMarketStatistics")]
+        [JsonPropertyName("listMarketStatistics")]
         public List<MarketStatistics> ListMarketStatistics { get; set; }
     }
 
     public class MarketStatistics
     {
-        [JsonProperty("ticker")]
+        [JsonPropertyName("ticker")]
         public string Ticker { get; set; }
 
-        [JsonProperty("atr")]
+        [JsonPropertyName("atr")]
         public decimal? ATR { get; set; }
 
-        [JsonProperty("price")]
+        [JsonPropertyName("price")]
         public decimal? Price { get; set; }
 
-        [JsonProperty("fifteenMin")]
+        [JsonPropertyName("fifteenMin")]
         public Statistics FifteenMin { get; set; }
 
-        [JsonProperty("thirtyMin")]
+        [JsonPropertyName("thirtyMin")]
         public Statistics ThirtyMin { get; set; }
 
-        [JsonProperty("oneHour")]
+        [JsonPropertyName("oneHour")]
         public Statistics OneHour { get; set; }
 
-        [JsonProperty("twoHour")]
+        [JsonPropertyName("twoHour")]
         public Statistics TwoHour { get; set; }
 
-        [JsonProperty("fourHour")]
+        [JsonPropertyName("fourHour")]
         public Statistics FourHour { get; set; }
     }
 
     public class Statistics
     {
-        [JsonProperty("rvol")]
+        [JsonPropertyName("rvol")]
         public decimal? Rvol { get; set; }
 
-        [JsonProperty("rsRw")]
+        [JsonPropertyName("rsRw")]
         public decimal? RsRw { get; set; }
     }
 
