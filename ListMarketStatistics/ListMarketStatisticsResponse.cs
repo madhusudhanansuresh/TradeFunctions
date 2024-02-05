@@ -9,6 +9,7 @@ namespace TradeFunctions.ListMarketStatistics
     {
         public string Ticker { get; set; }
         public decimal? ATR { get; set; }
+        public decimal? Price { get; set; }
         public Statistics FiveMin { get; set; }
         public Statistics TenMin { get; set; }
         public Statistics FifteenMin { get; set; }
