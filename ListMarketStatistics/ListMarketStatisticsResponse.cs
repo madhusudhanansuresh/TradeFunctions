@@ -1,35 +1,47 @@
+using Newtonsoft.Json;
+
 namespace TradeFunctions.ListMarketStatistics
 {
     public class ListMarketStatisticsResponse
     {
+        [JsonProperty("listMarketStatistics")]
         public List<MarketStatistics> ListMarketStatistics { get; set; }
     }
 
     public class MarketStatistics
     {
+        [JsonProperty("ticker")]
         public string Ticker { get; set; }
-        public decimal? ATR { get; set; }
-        public decimal? Price { get; set; }
-        public Statistics FiveMin { get; set; }
-        public Statistics TenMin { get; set; }
-        public Statistics FifteenMin { get; set; }
-        public Statistics TwentyMin { get; set; }
-        public Statistics TwentyFiveMin { get; set; }
-        public Statistics ThirtyMin { get; set; }
-        public Statistics FortyFiveMin { get; set; }
-        public Statistics OneHour { get; set; }
-        public Statistics TwoHour { get; set; }
-        public Statistics ThreeHour { get; set; }
-        public Statistics FourHour { get; set; }
-        public Statistics FiveHour { get; set; }
-        public Statistics SixHour { get; set; }
-        public Statistics SevenAndHalfHours { get; set; }
 
+        [JsonProperty("atr")]
+        public decimal? ATR { get; set; }
+
+        [JsonProperty("price")]
+        public decimal? Price { get; set; }
+
+        [JsonProperty("fifteenMin")]
+        public Statistics FifteenMin { get; set; }
+
+        [JsonProperty("thirtyMin")]
+        public Statistics ThirtyMin { get; set; }
+
+        [JsonProperty("oneHour")]
+        public Statistics OneHour { get; set; }
+
+        [JsonProperty("twoHour")]
+        public Statistics TwoHour { get; set; }
+
+        [JsonProperty("fourHour")]
+        public Statistics FourHour { get; set; }
     }
 
     public class Statistics
     {
+        [JsonProperty("rvol")]
         public decimal? Rvol { get; set; }
+
+        [JsonProperty("rsRw")]
         public decimal? RsRw { get; set; }
     }
+
 }

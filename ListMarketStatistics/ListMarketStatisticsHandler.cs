@@ -60,20 +60,11 @@ namespace TradeFunctions.ListMarketStatistics
                                    Ticker = ticker.TickerName,
                                    ATR = tickerAtr.HasValue ? Math.Round(tickerAtr.Value, 2) : (decimal?)null,
                                    Price = tickerPrices.OrderByDescending(x => x.Timestamp).FirstOrDefault().ClosePrice,
-                                //    FiveMin = new() { Rvol = CalculateRVOL("5Min", tickerPrices), RsRw = CalculateRelativeStrength("5Min", tickerPrices, spyPrices, spyAtr, tickerAtr) },
-                                //    TenMin = new() { Rvol = CalculateRVOL("10Min", tickerPrices), RsRw = CalculateRelativeStrength("10Min", tickerPrices, spyPrices, spyAtr, tickerAtr) },
                                    FifteenMin = new() { Rvol = CalculateRVOL("15Min", tickerPrices), RsRw = CalculateRelativeStrength("15Min", tickerPrices, spyPrices, spyAtr, tickerAtr) },
-                                //    TwentyMin = new() { Rvol = CalculateRVOL("20Min", tickerPrices), RsRw = CalculateRelativeStrength("20Min", tickerPrices, spyPrices, spyAtr, tickerAtr) },
-                                   //TwentyFiveMin = new() { Rvol = CalculateRVOL("25Min", tickerPrices), RsRw = CalculateRelativeStrength("25Min", tickerPrices, spyPrices, spyAtr, tickerAtr) },
                                    ThirtyMin = new() { Rvol = CalculateRVOL("30Min", tickerPrices), RsRw = CalculateRelativeStrength("30Min", tickerPrices, spyPrices, spyAtr, tickerAtr) },
-                                //    FortyFiveMin = new() { Rvol = CalculateRVOL("45Min", tickerPrices), RsRw = CalculateRelativeStrength("45Min", tickerPrices, spyPrices, spyAtr, tickerAtr) },
                                    OneHour = new() { Rvol = CalculateRVOL("1Hour", tickerPrices), RsRw = CalculateRelativeStrength("1Hour", tickerPrices, spyPrices, spyAtr, tickerAtr) },
                                    TwoHour = new() { Rvol = CalculateRVOL("2Hour", tickerPrices), RsRw = CalculateRelativeStrength("2Hour", tickerPrices, spyPrices, spyAtr, tickerAtr) },
-                                   //ThreeHour = new() { Rvol = CalculateRVOL("3Hour", tickerPrices), RsRw = CalculateRelativeStrength("3Hour", tickerPrices, spyPrices, spyAtr, tickerAtr) },
                                    FourHour = new() { Rvol = CalculateRVOL("4Hour", tickerPrices), RsRw = CalculateRelativeStrength("4Hour", tickerPrices, spyPrices, spyAtr, tickerAtr) },
-                                   //FiveHour = new() { Rvol = CalculateRVOL("5Hour", tickerPrices), RsRw = CalculateRelativeStrength("5Hour", tickerPrices, spyPrices, spyAtr, tickerAtr) },
-                                   //SixHour = new() { Rvol = CalculateRVOL("6Hour", tickerPrices), RsRw = CalculateRelativeStrength("6Hour", tickerPrices, spyPrices, spyAtr, tickerAtr) },
-                                   //SevenAndHalfHours = new() { Rvol = CalculateRVOL("7AndHalfHour", tickerPrices), RsRw = CalculateRelativeStrength("7AndHalfHour", tickerPrices, spyPrices, spyAtr, tickerAtr) },
                                 };
 
                                listMarketStatistics.Add(marketStatistics);
@@ -206,26 +197,12 @@ namespace TradeFunctions.ListMarketStatistics
 
             switch (timeFrame)
             {
-                case "5Min":
-                    minutesBack = 0;
-                    break;
-                case "10Min":
-                    minutesBack = 5;
-                    break;
+              
                 case "15Min":
                     minutesBack = 10;
                     break;
-                case "20Min":
-                    minutesBack = 15;
-                    break;
-                case "25Min":
-                    minutesBack = 20;
-                    break;
                 case "30Min":
                     minutesBack = 25;
-                    break;
-                case "45Min":
-                    minutesBack = 40;
                     break;
                 case "1Hour":
                     minutesBack = 55;
@@ -233,21 +210,10 @@ namespace TradeFunctions.ListMarketStatistics
                 case "2Hour":
                     minutesBack = 115;
                     break;
-                case "3Hour":
-                    minutesBack = 175;
-                    break;
                 case "4Hour":
                     minutesBack = 235;
                     break;
-                case "5Hour":
-                    minutesBack = 295;
-                    break;
-                case "6Hour":
-                    minutesBack = 355;
-                    break;
-                case "7AndHalfHour":
-                    minutesBack = 385;
-                    break;
+            
                 default:
                     throw new ArgumentException("Invalid time frame");
             }
