@@ -44,7 +44,7 @@ namespace TradeFunctions.ListMarketStatistics
         [JsonPropertyName("rvol")]
         public decimal? Rvol { get; set; }
 
-        [JsonPropertyName("rsRw")]
+        [JsonPropertyName("rsrw")]
         public decimal? RsRw { get; set; }
     }
 
