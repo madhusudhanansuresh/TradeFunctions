@@ -1,4 +1,6 @@
 using System;
+using System.Net;
+using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
@@ -20,13 +22,18 @@ namespace TradeFunctions.ListMarketStatistics
         }
 
         [Function("marketStatistics")]
-        public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Function, "post")] HttpRequestData request)
+        public async Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Function, "post")] HttpRequestData request)
         {
             _logger.LogInformation("C# HTTP trigger function processed a request.");
+            var data = await _listMarketStatisticsHandler.ListStatistics();
+            var response = request.CreateResponse(HttpStatusCode.OK);
+            response.Headers.Add("Content-Type", "application/json; charset=utf-8");
 
-           var data = await _listMarketStatisticsHandler.ListStatistics();
+            var jsonResponse = JsonSerializer.Serialize(data);
+            response.WriteString(jsonResponse);
 
-            return new OkObjectResult(data);
+
+            return response;
         }
     }
 }

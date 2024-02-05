@@ -7,6 +7,9 @@ namespace TradeFunctions.ListMarketStatistics
     {
         [JsonPropertyName("listMarketStatistics")]
         public List<MarketStatistics> ListMarketStatistics { get; set; }
+        
+        [JsonPropertyName("success")]
+        public bool Success { get; set; }
     }
 
     public class MarketStatistics
