@@ -39,7 +39,7 @@ namespace TradeFunctions.ImportMarketData
                 methodContainer.AddMethod(new SimpleMethod("time_series"));
                 using (var dbContext = new TradeContext(_dbConnectionStringService.ConnectionString()))
                 {
-                    var timeFrame = "5min";
+                    var timeFrame = "15min";
                    
 
                     // var specificTicker = await dbContext.Tickers
