@@ -11,6 +11,8 @@ public partial class Ticker
 
     public string? CompanyName { get; set; }
 
+    public bool? Active { get; set; }
+
     public DateTime? CreateDt { get; set; }
 
     public DateTime? LastUpdateDt { get; set; }

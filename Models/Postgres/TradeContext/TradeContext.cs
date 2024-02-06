@@ -103,6 +103,8 @@ public partial class TradeContext : DbContext
             entity.Property(e => e.CompanyName)
                 .HasMaxLength(255)
                 .HasColumnName("company_name");
+            entity.Property(e => e.Active)
+                .HasColumnName("active");
             entity.Property(e => e.CreateDt)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnType("timestamp without time zone")

@@ -39,19 +39,23 @@ namespace TradeFunctions.ImportMarketData
                 methodContainer.AddMethod(new SimpleMethod("time_series"));
                 using (var dbContext = new TradeContext(_dbConnectionStringService.ConnectionString()))
                 {
+                    dbContext.StockPrices.RemoveRange(dbContext.StockPrices);
+                    await dbContext.SaveChangesAsync(cancellationToken);
                    
-                    var specificTicker = await dbContext.Tickers
-                                    .Where(t => t.TickerName == "SPY")
-                                    .FirstOrDefaultAsync();
+                    // var specificTicker = await dbContext.Tickers
+                    //                 .Where(t => t.TickerName == "SPY")
+                    //                 .FirstOrDefaultAsync();
 
-                    var otherTickers = await dbContext.Tickers
-                                                      .Where(t => t.TickerName != "SPY")
-                                                      .Take(54) // Adjusting the number to account for the specific ticker
-                                                      .ToListAsync();
+                    // var otherTickers = await dbContext.Tickers
+                    //                                   .Where(t => t.TickerName != "SPY")
+                    //                                   .Take(54)
+                    //                                   .ToListAsync();
 
-                    // Combine the specific ticker with the others, ensuring the specific ticker is included if it exists.
-                    // var tickers = await dbContext.Tickers.Take(55).ToListAsync();
-                    var tickers = specificTicker != null ? new List<Ticker> { specificTicker }.Concat(otherTickers).ToList() : otherTickers;
+                    // // Combine the specific ticker with the others, ensuring the specific ticker is included if it exists.
+                    // // var tickers = await dbContext.Tickers.Take(55).ToListAsync();
+                    // var tickers = specificTicker != null ? new List<Ticker> { specificTicker }.Concat(otherTickers).ToList() : otherTickers;
+
+                    var tickers = await dbContext.Tickers.Where(x => x.Active == true).ToListAsync();
 
                     var tickerNames = tickers.Select(x => x.TickerName).ToList();
 
@@ -107,7 +111,6 @@ namespace TradeFunctions.ImportMarketData
                 LowPrice = decimal.Parse(valueData.Low),
                 OpenPrice = decimal.Parse(valueData.Open),
                 TradingVolume = decimal.Parse(valueData.Volume),
-                // Timestamp = Convert.ToDateTime(valueData.Datetime),
                 Timestamp = valueData.Datetime
             };
         }
