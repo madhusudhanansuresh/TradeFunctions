@@ -37,7 +37,7 @@ namespace TradeFunctions.ListMarketStatistics
                 {
                     var thirtyDaysAgo = DateTime.Now.AddDays(-30);
 
-                    var tickers = await dbContext.Tickers.ToListAsync();
+                    var tickers = await dbContext.Tickers.Where(x => x.Active == true).ToListAsync();
 
                     var stockPrices = await dbContext.StockPrices.Where(x => x.Timestamp >= thirtyDaysAgo).ToListAsync();
 
@@ -199,19 +199,19 @@ namespace TradeFunctions.ListMarketStatistics
             {
               
                 case "15Min":
-                    minutesBack = 10;
+                    minutesBack = 15;
                     break;
                 case "30Min":
-                    minutesBack = 25;
+                    minutesBack = 30;
                     break;
                 case "1Hour":
-                    minutesBack = 55;
+                    minutesBack = 60;
                     break;
                 case "2Hour":
-                    minutesBack = 115;
+                    minutesBack = 120;
                     break;
                 case "4Hour":
-                    minutesBack = 235;
+                    minutesBack = 240;
                     break;
             
                 default:
