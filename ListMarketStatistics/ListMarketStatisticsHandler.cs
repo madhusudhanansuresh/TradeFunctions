@@ -200,19 +200,19 @@ namespace TradeFunctions.ListMarketStatistics
             {
               
                 case "15Min":
-                    minutesBack = 15;
+                    minutesBack = 0;
                     break;
                 case "30Min":
-                    minutesBack = 30;
+                    minutesBack = 15;
                     break;
                 case "1Hour":
-                    minutesBack = 60;
+                    minutesBack = 45;
                     break;
                 case "2Hour":
-                    minutesBack = 120;
+                    minutesBack = 105;
                     break;
                 case "4Hour":
-                    minutesBack = 240;
+                    minutesBack = 225;
                     break;
             
                 default:
