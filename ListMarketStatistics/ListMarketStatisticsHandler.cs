@@ -149,8 +149,6 @@ namespace TradeFunctions.ListMarketStatistics
                 var endTimeStamp = lastPrice.Timestamp; // Last known timestamp, no need for Nullable.
                 var startTimeStamp = TimeframeStart(timeFrame, endTimeStamp); // Assume this returns a DateTime not nullable, or handle nullability inside TimeframeStart.
 
-                // var test = tickerPrices
-                //                     .Where(x => x.Timestamp >= startTimeStamp && x.Timestamp <= endTimeStamp);
 
                 var sumOfVolume = tickerPrices
                                     .Where(x => x.Timestamp >= startTimeStamp && x.Timestamp <= endTimeStamp)
