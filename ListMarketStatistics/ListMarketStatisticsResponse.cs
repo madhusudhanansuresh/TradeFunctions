@@ -37,6 +37,9 @@ namespace TradeFunctions.ListMarketStatistics
 
         [JsonPropertyName("fourHour")]
         public Statistics FourHour { get; set; }
+
+        [JsonPropertyName("timeStamp")]
+        public DateTime? Timestamp { get; set; }
     }
 
     public class Statistics
