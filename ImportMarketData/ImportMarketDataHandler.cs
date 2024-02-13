@@ -41,18 +41,6 @@ namespace TradeFunctions.ImportMarketData
                 {
                     var timeFrame = "15min";
                    
-
-                    // var specificTicker = await dbContext.Tickers
-                    //                 .Where(t => t.TickerName == "SPY")
-                    //                 .FirstOrDefaultAsync();
-
-                    // var otherTickers = await dbContext.Tickers
-                    //                                   .Where(t => t.TickerName != "SPY")
-                    //                                   .Take(54) // Adjusting the number to account for the specific ticker
-                    //                                   .ToListAsync();
-
-                    // Combine the specific ticker with the others, ensuring the specific ticker is included if it exists.
-                    // var tickers = await dbContext.Tickers.Take(55).ToListAsync();
                     var tickers = await dbContext.Tickers.Where(x => x.Active == true).ToListAsync();
 
                     var tickerNames = tickers.Select(x => x.TickerName).ToList();

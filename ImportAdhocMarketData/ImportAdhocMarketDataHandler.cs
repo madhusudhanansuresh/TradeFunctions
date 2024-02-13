@@ -41,19 +41,6 @@ namespace TradeFunctions.ImportMarketData
                 {
                     dbContext.StockPrices.RemoveRange(dbContext.StockPrices);
                     await dbContext.SaveChangesAsync(cancellationToken);
-                   
-                    // var specificTicker = await dbContext.Tickers
-                    //                 .Where(t => t.TickerName == "SPY")
-                    //                 .FirstOrDefaultAsync();
-
-                    // var otherTickers = await dbContext.Tickers
-                    //                                   .Where(t => t.TickerName != "SPY")
-                    //                                   .Take(54)
-                    //                                   .ToListAsync();
-
-                    // // Combine the specific ticker with the others, ensuring the specific ticker is included if it exists.
-                    // // var tickers = await dbContext.Tickers.Take(55).ToListAsync();
-                    // var tickers = specificTicker != null ? new List<Ticker> { specificTicker }.Concat(otherTickers).ToList() : otherTickers;
 
                     var tickers = await dbContext.Tickers.Where(x => x.Active == true).ToListAsync();
 

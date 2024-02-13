@@ -91,20 +91,26 @@ namespace TradeFunctions.ListMarketStatistics
 
                 var startTimeStamp = TimeframeStart(timeFrame, endTimeStamp);
 
+                var startPrice = tickerPrices.Where(x => x.Timestamp == startTimeStamp).Any();
+
+                if(!startPrice)
+                {
+                    return null;
+                }
+
+
                 var openingPriceRecord = tickerPrices
                                 .FirstOrDefault(x => x.Timestamp == startTimeStamp);
 
                 var openingSpyPriceRecord = spyPrices
                                 .FirstOrDefault(x => x.Timestamp == startTimeStamp);
 
-                // Get the closing price for the endTimeStamp (last record on or before endTimeStamp)
                 var closingPriceRecord = tickerPrices
-                                            .LastOrDefault(x => x.Timestamp == endTimeStamp);
+                                            .FirstOrDefault(x => x.Timestamp == endTimeStamp);
 
                 var closingSpyPriceRecord = spyPrices
-                                            .LastOrDefault(x => x.Timestamp == endTimeStamp);
+                                            .FirstOrDefault(x => x.Timestamp == endTimeStamp);
 
-                // Extracting prices from the records
                 var openingPrice = openingPriceRecord?.OpenPrice;
                 var closingPrice = closingPriceRecord?.ClosePrice;
 
@@ -139,15 +145,21 @@ namespace TradeFunctions.ListMarketStatistics
                 var totalDaysChecked = 0;
                 var daysWithData = 0;
 
-                // Use FirstOrDefault and check for null to avoid exceptions.
                 var lastPrice = tickerPrices.OrderByDescending(x => x.Timestamp).FirstOrDefault();
                 if (lastPrice == null)
                 {
                     throw new InvalidOperationException("Unable to find any timestamps in ticker prices.");
                 }
 
-                var endTimeStamp = lastPrice.Timestamp; // Last known timestamp, no need for Nullable.
-                var startTimeStamp = TimeframeStart(timeFrame, endTimeStamp); // Assume this returns a DateTime not nullable, or handle nullability inside TimeframeStart.
+                var endTimeStamp = lastPrice.Timestamp;
+                var startTimeStamp = TimeframeStart(timeFrame, endTimeStamp);
+
+                var startPrice = tickerPrices.Where(x => x.Timestamp == startTimeStamp).Any();
+
+                if(!startPrice)
+                {
+                    return null;
+                }
 
 
                 var sumOfVolume = tickerPrices
