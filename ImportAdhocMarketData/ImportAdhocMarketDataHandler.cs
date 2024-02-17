@@ -88,7 +88,6 @@ namespace TradeFunctions.ImportMarketData
         {
             return new StockPrice
             {
-                // Assuming TickerId and ChartId are determined separately
                 TickerId = tickerId,
                 ChartId = chartId,
                 TransactionCount = 0,

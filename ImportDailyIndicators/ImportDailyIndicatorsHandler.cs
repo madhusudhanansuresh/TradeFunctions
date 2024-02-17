@@ -17,13 +17,15 @@ namespace TradeFunctions.ImportDailyIndicators
         private readonly ILogger _logger;
 
         private readonly ITwelveDataService _twelveDataService;
+        private readonly IPushoverService _pushOverService;
         public IDbConnectionStringService _dbConnectionStringService { get; }
 
-        public ImportDailyIndicatorsHandler(ILoggerFactory loggerFactory, IDbConnectionStringService dbConnectionStringService, ITwelveDataService twelveDataService)
+        public ImportDailyIndicatorsHandler(ILoggerFactory loggerFactory, IDbConnectionStringService dbConnectionStringService, ITwelveDataService twelveDataService, IPushoverService pushoverService)
         {
             _logger = loggerFactory.CreateLogger<ImportDailyIndicatorsHandler>();
             _dbConnectionStringService = dbConnectionStringService;
             _twelveDataService = twelveDataService;
+            _pushOverService = pushoverService;
         }
 
         public async Task<bool> ImportATR(CancellationToken cancellationToken = default)
@@ -59,7 +61,7 @@ namespace TradeFunctions.ImportDailyIndicators
 
                     foreach (var stockData in stockDataResponse?.Data)
                     {
-                         var tickerId = tickers.Where(x => x.TickerName == stockData?.Meta?.Symbol).Select(x => x.Id).FirstOrDefault();
+                        var tickerId = tickers.Where(x => x.TickerName == stockData?.Meta?.Symbol).Select(x => x.Id).FirstOrDefault();
 
                         if (stockData == null)
                         {
@@ -74,12 +76,18 @@ namespace TradeFunctions.ImportDailyIndicators
                         }
                         foreach (var value in stockData?.Values)
                         {
-                           
                             var dailyIndicator = MapToStockPrice(value, stockData.Meta, tickerId);
                             dbContext.DailyIndicators.Add(dailyIndicator);
                         }
                     }
                     await dbContext.SaveChangesAsync(cancellationToken);
+
+                    if (tickers.Count != stockDataResponse.Data.Count || stockDataResponse.Data.Any(x => x.Values[0].ATR <= 0))
+                    {
+                        _pushOverService.SendNotificationAsync("Scheduled Atr Import failed", "Failure - Atr Import", "", "", "1");
+                        _logger.LogInformation("Issue in importing ATR");
+                    }
+
                     _logger.LogInformation("ImportATR operation completed successfully.");
                     return true;
                 }

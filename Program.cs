@@ -21,17 +21,10 @@ var host = new HostBuilder()
         services.AddScoped<IListMarketStatisticsHandler, ListMarketStatisticsHandler>();
         services.AddScoped<IImportAdhocMarketDataHandler, ImportAdhocMarketDataHandler>();
         services.AddScoped<ITwelveDataService, TwelveDataService>();
+        services.AddScoped<IPushoverService, PushoverService>();
         var connectionString = Environment.GetEnvironmentVariable("TradeDatabase");
         services.AddDbContext<TradeContext>(options =>
             options.UseNpgsql(connectionString));
-
-
-        // Add DbContext configuration
-        // var connectionString = hostContext.Configuration.GetConnectionString("TradeDatabase") ??
-        //                        hostContext.Configuration["TradeDatabase"];
-
-        // services.AddDbContext<TradeContext>(options =>
-        //     options.UseNpgsql(connectionString));
 
     })
     .ConfigureAppConfiguration((context, builder) =>
