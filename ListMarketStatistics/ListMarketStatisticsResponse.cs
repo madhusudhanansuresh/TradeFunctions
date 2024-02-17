@@ -10,6 +10,9 @@ namespace TradeFunctions.ListMarketStatistics
         
         [JsonPropertyName("success")]
         public bool Success { get; set; }
+        
+        [JsonPropertyName("count")]
+        public int Count { get; set; }
     }
 
     public class MarketStatistics

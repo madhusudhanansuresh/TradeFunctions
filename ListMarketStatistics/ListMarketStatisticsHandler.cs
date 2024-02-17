@@ -1,12 +1,6 @@
 using System.Collections.Concurrent;
-using System.Globalization;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using AssessmentDeck.Services;
-using Microsoft.Azure.Functions.Worker.Extensions.Abstractions;
 using Microsoft.EntityFrameworkCore;
-using TradeFunctions.Models.Helpers;
 using TradeFunctions.Models.Postgres.TradeContext;
 using TradeFunctions.Services;
 
@@ -73,7 +67,7 @@ namespace TradeFunctions.ListMarketStatistics
                        });
                 }
 
-                return new ListMarketStatisticsResponse { ListMarketStatistics = listMarketStatistics };
+                return new ListMarketStatisticsResponse { ListMarketStatistics = listMarketStatistics, Success = true, Count = listMarketStatistics.Count() };
             }
             catch (Exception ex)
             {
