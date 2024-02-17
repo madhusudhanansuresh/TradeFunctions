@@ -26,48 +26,29 @@ namespace TradeFunctions.ListMarketStatistics
         {
             try
             {
-                List<MarketStatistics> listMarketStatistics = new List<MarketStatistics>();
+                var listMarketStatistics = new List<MarketStatistics>();
                 using (var dbContext = new TradeContext(_dbConnectionStringService.ConnectionString()))
                 {
                     var thirtyDaysAgo = DateTime.Now.AddDays(-30);
 
-                    var tickers = await dbContext.Tickers.Where(x => x.Active == true).ToListAsync();
+                    var tickers = await dbContext.Tickers.Where(x => x.Active == true).ToListAsync(cancellationToken);
 
-                    var stockPrices = await dbContext.StockPrices.Where(x => x.Timestamp >= thirtyDaysAgo).ToListAsync();
+                    var stockPrices = await dbContext.StockPrices.Where(x => x.Timestamp >= thirtyDaysAgo).ToListAsync(cancellationToken);
 
                     var spyPrices = stockPrices.Where(x => x.TickerId == 529).ToList();
 
                     var tickerAtrs = await dbContext.DailyIndicators.ToDictionaryAsync(di => di.TickerId, di => di.Atr, cancellationToken);
-                    var parallelOptions = new ParallelOptions { CancellationToken = cancellationToken, MaxDegreeOfParallelism = Environment.ProcessorCount };
-                    var concurrentListMarketStatistics = new ConcurrentBag<MarketStatistics>();
 
-                    Parallel.ForEach(tickers, parallelOptions, async ticker =>
-                       {
-                           var tickerPrices = stockPrices.Where(x => x.TickerId == ticker.Id).ToList();
-                           tickerAtrs.TryGetValue(ticker.Id, out var tickerAtr);
-                           var spyAtr = tickerAtrs.TryGetValue(529, out var sa) ? sa : null;
+                    // Create tasks for each ticker
+                    var tasks = tickers.Select(ticker => ProcessTickerAsync(ticker, stockPrices, spyPrices, tickerAtrs, cancellationToken)).ToList();
 
-                           if (tickerPrices.Any())
-                           {
-                               var marketStatistics = new MarketStatistics
-                               {
-                                   Ticker = ticker.TickerName,
-                                   ATR = tickerAtr.HasValue ? Math.Round(tickerAtr.Value, 2) : (decimal?)null,
-                                   Price = tickerPrices.OrderByDescending(x => x.Timestamp).FirstOrDefault().ClosePrice,
-                                   FifteenMin = new() { Rvol = CalculateRVOL("15Min", tickerPrices), RsRw = CalculateRelativeStrength("15Min", tickerPrices, spyPrices, spyAtr, tickerAtr) },
-                                   ThirtyMin = new() { Rvol = CalculateRVOL("30Min", tickerPrices), RsRw = CalculateRelativeStrength("30Min", tickerPrices, spyPrices, spyAtr, tickerAtr) },
-                                   OneHour = new() { Rvol = CalculateRVOL("1Hour", tickerPrices), RsRw = CalculateRelativeStrength("1Hour", tickerPrices, spyPrices, spyAtr, tickerAtr) },
-                                   TwoHour = new() { Rvol = CalculateRVOL("2Hour", tickerPrices), RsRw = CalculateRelativeStrength("2Hour", tickerPrices, spyPrices, spyAtr, tickerAtr) },
-                                   FourHour = new() { Rvol = CalculateRVOL("4Hour", tickerPrices), RsRw = CalculateRelativeStrength("4Hour", tickerPrices, spyPrices, spyAtr, tickerAtr) },
-                                   Timestamp = tickerPrices.OrderByDescending(x => x.Timestamp).FirstOrDefault().Timestamp
-                                };
+                    // Wait for all tasks to complete
+                    var results = await Task.WhenAll(tasks);
 
-                               listMarketStatistics.Add(marketStatistics);
-                           }
-                       });
+                    listMarketStatistics.AddRange(results.Where(statistics => statistics != null));
                 }
 
-                return new ListMarketStatisticsResponse { ListMarketStatistics = listMarketStatistics, Success = true, Count = listMarketStatistics.Count() };
+                return new ListMarketStatisticsResponse { ListMarketStatistics = listMarketStatistics, Success = true, Count = listMarketStatistics.Count };
             }
             catch (Exception ex)
             {
@@ -75,6 +56,33 @@ namespace TradeFunctions.ListMarketStatistics
 
                 return null;
             }
+        }
+
+        private async Task<MarketStatistics> ProcessTickerAsync(Ticker ticker, List<StockPrice> stockPrices, List<StockPrice> spyPrices, Dictionary<int, decimal?> tickerAtrs, CancellationToken cancellationToken)
+        {
+            var tickerPrices = stockPrices.Where(x => x.TickerId == ticker.Id).ToList();
+            tickerAtrs.TryGetValue(ticker.Id, out var tickerAtr);
+            var spyAtr = tickerAtrs.TryGetValue(529, out var sa) ? sa : null;
+
+            if (tickerPrices.Any())
+            {
+                var marketStatistics = new MarketStatistics
+                {
+                    Ticker = ticker.TickerName,
+                    ATR = tickerAtr.HasValue ? Math.Round(tickerAtr.Value, 2) : (decimal?)null,
+                    Price = tickerPrices.OrderByDescending(x => x.Timestamp).FirstOrDefault().ClosePrice,
+                    FifteenMin = new() { Rvol = CalculateRVOL("15Min", tickerPrices), RsRw = CalculateRelativeStrength("15Min", tickerPrices, spyPrices, spyAtr, tickerAtr) },
+                    ThirtyMin = new() { Rvol = CalculateRVOL("30Min", tickerPrices), RsRw = CalculateRelativeStrength("30Min", tickerPrices, spyPrices, spyAtr, tickerAtr) },
+                    OneHour = new() { Rvol = CalculateRVOL("1Hour", tickerPrices), RsRw = CalculateRelativeStrength("1Hour", tickerPrices, spyPrices, spyAtr, tickerAtr) },
+                    TwoHour = new() { Rvol = CalculateRVOL("2Hour", tickerPrices), RsRw = CalculateRelativeStrength("2Hour", tickerPrices, spyPrices, spyAtr, tickerAtr) },
+                    FourHour = new() { Rvol = CalculateRVOL("4Hour", tickerPrices), RsRw = CalculateRelativeStrength("4Hour", tickerPrices, spyPrices, spyAtr, tickerAtr) },
+                    Timestamp = tickerPrices.OrderByDescending(x => x.Timestamp).FirstOrDefault().Timestamp
+                };
+
+                return marketStatistics;
+            }
+
+            return null; // Return null if no prices found for the ticker
         }
 
         private static decimal? CalculateRelativeStrength(string timeFrame, List<StockPrice> tickerPrices, List<StockPrice> spyPrices, decimal? spyAtr, decimal? stockAtr)
@@ -87,7 +95,7 @@ namespace TradeFunctions.ListMarketStatistics
 
                 var startPrice = tickerPrices.Where(x => x.Timestamp == startTimeStamp).Any();
 
-                if(!startPrice)
+                if (!startPrice)
                 {
                     return null;
                 }
@@ -150,7 +158,7 @@ namespace TradeFunctions.ListMarketStatistics
 
                 var startPrice = tickerPrices.Where(x => x.Timestamp == startTimeStamp).Any();
 
-                if(!startPrice)
+                if (!startPrice)
                 {
                     return null;
                 }
@@ -201,7 +209,7 @@ namespace TradeFunctions.ListMarketStatistics
 
             switch (timeFrame)
             {
-              
+
                 case "15Min":
                     minutesBack = 0;
                     break;
