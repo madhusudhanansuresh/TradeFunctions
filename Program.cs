@@ -9,6 +9,8 @@ using TradeFunctions.Services;
 using TradeFunctions.ImportDailyIndicators;
 using TradeFunctions.ListMarketStatistics;
 using System.Text.Json;
+using TradeFunctions.AddOrRemoveWatchlist;
+using TradeFunctions.ListWatchlist;
 
 var host = new HostBuilder()
     .ConfigureFunctionsWorkerDefaults()
@@ -22,6 +24,8 @@ var host = new HostBuilder()
         services.AddScoped<IImportAdhocMarketDataHandler, ImportAdhocMarketDataHandler>();
         services.AddScoped<ITwelveDataService, TwelveDataService>();
         services.AddScoped<IPushoverService, PushoverService>();
+         services.AddScoped<IAddOrRemoveWatchlistHandler, AddOrRemoveWatchlistHandler>();
+          services.AddScoped<IListWatchlist, ListWatchlistHandler>();
         var connectionString = Environment.GetEnvironmentVariable("TradeDatabase");
         services.AddDbContext<TradeContext>(options =>
             options.UseNpgsql(connectionString));

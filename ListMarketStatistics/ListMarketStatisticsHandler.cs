@@ -13,13 +13,11 @@ namespace TradeFunctions.ListMarketStatistics
 
     public class ListMarketStatisticsHandler : IListMarketStatisticsHandler
     {
-        private readonly ITwelveDataService _twelveDataService;
         public IDbConnectionStringService _dbConnectionStringService { get; }
 
-        public ListMarketStatisticsHandler(IDbConnectionStringService dbConnectionStringService, ITwelveDataService twelveDataService)
+        public ListMarketStatisticsHandler(IDbConnectionStringService dbConnectionStringService)
         {
             _dbConnectionStringService = dbConnectionStringService;
-            _twelveDataService = twelveDataService;
         }
 
         public async Task<ListMarketStatisticsResponse> ListStatistics(CancellationToken cancellationToken = default)

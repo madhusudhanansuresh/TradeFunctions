@@ -23,9 +23,11 @@ public partial class TradeContext : DbContext
 
     public virtual DbSet<DailyIndicator> DailyIndicators { get; set; }
 
-//     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-// #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-//         => optionsBuilder.UseNpgsql("Host=devtradepostgres.postgres.database.azure.com;Database=postgres;Username=postgres_admin;Password=Sql-4567");
+    public virtual DbSet<Watchlist> Watchlists { get; set; }
+
+    //     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    // #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
+    //         => optionsBuilder.UseNpgsql("Host=devtradepostgres.postgres.database.azure.com;Database=postgres;Username=postgres_admin;Password=Sql-4567");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -144,6 +146,27 @@ public partial class TradeContext : DbContext
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("daily_indicators_ticker_id_fkey");
         });
+
+        modelBuilder.Entity<Watchlist>(entity =>
+       {
+           entity.HasKey(e => e.Id).HasName("watchlist_pkey");
+
+           entity.ToTable("watchlist", "trade");
+
+           entity.Property(e => e.Id).HasColumnName("id");
+           entity.Property(e => e.CreateDt)
+               .HasDefaultValueSql("CURRENT_TIMESTAMP")
+               .HasColumnName("create_dt");
+           entity.Property(e => e.LastUpdateDt)
+               .HasDefaultValueSql("CURRENT_TIMESTAMP")
+               .HasColumnName("last_update_dt");
+           entity.Property(e => e.Reason).HasColumnName("reason");
+           entity.Property(e => e.TickerId).HasColumnName("ticker_id");
+
+           entity.HasOne(d => d.Ticker).WithMany(p => p.Watchlists)
+               .HasForeignKey(d => d.TickerId)
+               .HasConstraintName("fk_ticker_id");
+       });
 
         OnModelCreatingPartial(modelBuilder);
     }
