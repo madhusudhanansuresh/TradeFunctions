@@ -116,7 +116,7 @@ namespace TradeFunctions.ListMarketStatistics
                 // Adjust the relative strength by the ATR adjustment factor
                 // Consider the desired directionality explicitly
                 decimal? adjustedRelativeStrength = (relativeStrength.HasValue && atrAdjustmentFactor.HasValue) ?
-                                                    (relativeStrength * atrAdjustmentFactor) :
+                                                    (relativeStrength / atrAdjustmentFactor) :
                                                     (decimal?)null;
 
                 // Handling the scenario where both moves are negative but stockMove is more negative
