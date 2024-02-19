@@ -70,10 +70,10 @@ namespace TradeFunctions.ListMarketStatistics
                     ATR = tickerAtr.HasValue ? Math.Round(tickerAtr.Value, 2) : (decimal?)null,
                     Price = tickerPrices.OrderByDescending(x => x.Timestamp).FirstOrDefault().ClosePrice,
                     FifteenMin = new() { Rvol = CalculateRVOL("15Min", tickerPrices), RsRw = CalculateRelativeStrength("15Min", tickerPrices, spyPrices, spyAtr, tickerAtr) },
-                    ThirtyMin = new() { Rvol = CalculateRVOL("30Min", tickerPrices), RsRw = CalculateRelativeStrength("30Min", tickerPrices, spyPrices, spyAtr, tickerAtr) },
-                    OneHour = new() { Rvol = CalculateRVOL("1Hour", tickerPrices), RsRw = CalculateRelativeStrength("1Hour", tickerPrices, spyPrices, spyAtr, tickerAtr) },
-                    TwoHour = new() { Rvol = CalculateRVOL("2Hour", tickerPrices), RsRw = CalculateRelativeStrength("2Hour", tickerPrices, spyPrices, spyAtr, tickerAtr) },
-                    FourHour = new() { Rvol = CalculateRVOL("4Hour", tickerPrices), RsRw = CalculateRelativeStrength("4Hour", tickerPrices, spyPrices, spyAtr, tickerAtr) },
+                    // ThirtyMin = new() { Rvol = CalculateRVOL("30Min", tickerPrices), RsRw = CalculateRelativeStrength("30Min", tickerPrices, spyPrices, spyAtr, tickerAtr) },
+                    // OneHour = new() { Rvol = CalculateRVOL("1Hour", tickerPrices), RsRw = CalculateRelativeStrength("1Hour", tickerPrices, spyPrices, spyAtr, tickerAtr) },
+                    // TwoHour = new() { Rvol = CalculateRVOL("2Hour", tickerPrices), RsRw = CalculateRelativeStrength("2Hour", tickerPrices, spyPrices, spyAtr, tickerAtr) },
+                    // FourHour = new() { Rvol = CalculateRVOL("4Hour", tickerPrices), RsRw = CalculateRelativeStrength("4Hour", tickerPrices, spyPrices, spyAtr, tickerAtr) },
                     Timestamp = tickerPrices.OrderByDescending(x => x.Timestamp).FirstOrDefault().Timestamp
                 };
 
@@ -88,52 +88,52 @@ namespace TradeFunctions.ListMarketStatistics
             try
             {
                 var endTimeStamp = tickerPrices.OrderByDescending(x => x.Timestamp).Select(x => x.Timestamp).FirstOrDefault();
-
                 var startTimeStamp = TimeframeStart(timeFrame, endTimeStamp);
 
-                var startPrice = tickerPrices.Where(x => x.Timestamp == startTimeStamp).Any();
-
-                if (!startPrice)
+                if (!tickerPrices.Any(x => x.Timestamp == startTimeStamp))
                 {
                     return null;
                 }
 
-
-                var openingPriceRecord = tickerPrices
-                                .FirstOrDefault(x => x.Timestamp == startTimeStamp);
-
-                var openingSpyPriceRecord = spyPrices
-                                .FirstOrDefault(x => x.Timestamp == startTimeStamp);
-
-                var closingPriceRecord = tickerPrices
-                                            .FirstOrDefault(x => x.Timestamp == endTimeStamp);
-
-                var closingSpyPriceRecord = spyPrices
-                                            .FirstOrDefault(x => x.Timestamp == endTimeStamp);
+                var openingPriceRecord = tickerPrices.FirstOrDefault(x => x.Timestamp == startTimeStamp);
+                var openingSpyPriceRecord = spyPrices.FirstOrDefault(x => x.Timestamp == startTimeStamp);
+                var closingPriceRecord = tickerPrices.FirstOrDefault(x => x.Timestamp == endTimeStamp);
+                var closingSpyPriceRecord = spyPrices.FirstOrDefault(x => x.Timestamp == endTimeStamp);
 
                 var openingPrice = openingPriceRecord?.OpenPrice;
                 var closingPrice = closingPriceRecord?.ClosePrice;
-
                 var openingSpyPrice = openingSpyPriceRecord?.OpenPrice;
                 var closingSpyPrice = closingSpyPriceRecord?.ClosePrice;
-
-
 
                 decimal? stockMove = closingPrice - openingPrice;
                 decimal? spyMove = closingSpyPrice - openingSpyPrice;
 
-                decimal? relativeStrength = stockMove / spyMove;
-                decimal? atrAdjustmentFactor = stockAtr / spyAtr;
-                decimal? adjustedRelativeStrength = relativeStrength / atrAdjustmentFactor;
+                // Directly compare the magnitudes of the moves without normalizing them to positive values
+                decimal? relativeStrength = (stockMove.HasValue && spyMove.HasValue && spyMove != 0) ? stockMove / spyMove : (decimal?)null;
+
+                decimal? atrAdjustmentFactor = (spyAtr.HasValue && spyAtr != 0 && stockAtr.HasValue) ? stockAtr / spyAtr : (decimal?)null;
+
+                // Adjust the relative strength by the ATR adjustment factor
+                // Consider the desired directionality explicitly
+                decimal? adjustedRelativeStrength = (relativeStrength.HasValue && atrAdjustmentFactor.HasValue) ?
+                                                    (relativeStrength * atrAdjustmentFactor) :
+                                                    (decimal?)null;
+
+                // Handling the scenario where both moves are negative but stockMove is more negative
+                if (stockMove < 0 && spyMove < 0 && Math.Abs(stockMove.Value) > Math.Abs(spyMove.Value))
+                {
+                    adjustedRelativeStrength = -Math.Abs(adjustedRelativeStrength.Value);
+                }
 
                 return adjustedRelativeStrength.HasValue ? Math.Round(adjustedRelativeStrength.Value, 2) : (decimal?)null;
-
             }
             catch (Exception ex)
             {
-                throw new Exception($"An error occurred while calculating RVOL for ticker {tickerPrices.FirstOrDefault().Ticker.TickerName}: {ex.Message}", ex);
+                // Consider logging the exception or handling it as appropriate for your application
+                throw new Exception($"An error occurred while calculating relative strength: {ex.Message}", ex);
             }
         }
+
 
         public static decimal? CalculateRVOL(string timeFrame, List<StockPrice> tickerPrices)
         {
