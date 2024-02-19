@@ -108,23 +108,12 @@ namespace TradeFunctions.ListMarketStatistics
                 decimal? stockMove = closingPrice - openingPrice;
                 decimal? spyMove = closingSpyPrice - openingSpyPrice;
 
-                // Directly compare the magnitudes of the moves without normalizing them to positive values
-                decimal? relativeStrength = (stockMove.HasValue && spyMove.HasValue && spyMove != 0) ? stockMove / spyMove : (decimal?)null;
+                decimal? relativeStrength = stockMove - spyMove;
 
-                decimal? atrAdjustmentFactor = (spyAtr.HasValue && spyAtr != 0 && stockAtr.HasValue) ? stockAtr / spyAtr : (decimal?)null;
+                decimal? atrAdjustmentFactor = stockAtr / spyAtr;
 
-                // Adjust the relative strength by the ATR adjustment factor
-                // Consider the desired directionality explicitly
-                decimal? adjustedRelativeStrength = (relativeStrength.HasValue && atrAdjustmentFactor.HasValue) ?
-                                                    (relativeStrength / atrAdjustmentFactor) :
-                                                    (decimal?)null;
-
-                // Handling the scenario where both moves are negative but stockMove is more negative
-                if (stockMove < 0 && spyMove < 0 && Math.Abs(stockMove.Value) > Math.Abs(spyMove.Value))
-                {
-                    adjustedRelativeStrength = -Math.Abs(adjustedRelativeStrength.Value);
-                }
-
+                decimal? adjustedRelativeStrength = relativeStrength / atrAdjustmentFactor;
+                
                 return adjustedRelativeStrength.HasValue ? Math.Round(adjustedRelativeStrength.Value, 2) : (decimal?)null;
             }
             catch (Exception ex)
