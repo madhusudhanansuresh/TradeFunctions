@@ -83,7 +83,7 @@ namespace TradeFunctions.ImportMarketData
                     if (tickers.Count != stockDataResponse.Data.Count)
                     {
                         _pushOverService.SendNotificationAsync($"Scheduled Time series import failed Total count: {tickers.Count} not matching retrieved count {stockDataResponse.Data.Count}", "Failure - Time Series Import", "", "", "1");
-                        _logger.LogInformation("Scheduled Time series import failed Total count: {tickers.Count} not matching retrieved count {stockDataResponse.Data.Count}");
+                        _logger.LogInformation($"Scheduled Time series import failed Total count: {tickers.Count} not matching retrieved count {stockDataResponse.Data.Count}");
                     }
                 }
 
