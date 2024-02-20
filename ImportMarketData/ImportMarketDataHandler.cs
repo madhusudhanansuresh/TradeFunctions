@@ -48,10 +48,10 @@ namespace TradeFunctions.ImportMarketData
                     var tickerNames = tickers.Select(x => x.TickerName).ToList();
 
                     var startDate = GetRoundedTime();
-                     _logger.LogInformation($"startDate: {startDate}");
+                    _logger.LogInformation($"startDate: {startDate}");
 
                     var endDate = GetRoundedTime();
-                     _logger.LogInformation($"endDate: {endDate}");
+                    _logger.LogInformation($"endDate: {endDate}");
 
                     var stockDataResponse = await _twelveDataService.FetchStockDataAsync(tickerNames, [timeFrame], startDate, endDate, 1, methodContainer);
 
@@ -117,19 +117,17 @@ namespace TradeFunctions.ImportMarketData
 
         public static string GetRoundedTime()
         {
-            DateTime now = DateTime.Now;
-            // Calculate the number of minutes to subtract to round down to the nearest 15 minutes
-            int minutesToSubtract = now.Minute % 15;
-            DateTime roundedTime = now.AddMinutes(-minutesToSubtract).AddSeconds(-now.Second);
+            TimeZoneInfo estZone = TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time");
+            DateTime nowEst = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, estZone);
 
-            // Ensure the rounded time is always before the current time, if necessary, by subtracting additional minutes
-            if (roundedTime.Minute == now.Minute + 2)
-            {
-                roundedTime = roundedTime.AddMinutes(-15);
-            }
+            int minutesToSubtract = nowEst.Minute % 15;
+            DateTime roundedTimeEst = nowEst.AddMinutes(-minutesToSubtract).AddSeconds(-nowEst.Second);
 
-            // Format and return the rounded time
-            return roundedTime.ToString("yyyy-MM-dd HH:mm:00");
+            roundedTimeEst = roundedTimeEst.AddMinutes(-15);
+
+            return roundedTimeEst.ToString("yyyy-MM-dd HH:mm:00");
         }
+
+
     }
 }
