@@ -17,7 +17,7 @@ namespace TradeFunctions.ImportMarketData
         }
 
         [Function("ImportMarketData")]
-        public void Run([TimerTrigger("2 */15 13-21 * * 1-5")] TimerInfo myTimer)
+        public async Task Run([TimerTrigger("2 */15 13-21 * * 1-5")] TimerInfo myTimer)
         {
             TimeZoneInfo estZone = TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time");
             DateTime estTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, estZone);
@@ -26,7 +26,7 @@ namespace TradeFunctions.ImportMarketData
             // Check if current EST time is within the desired range (9:30 AM to 4:00 PM)
             if ((estTime.Hour == 9 && estTime.Minute >= 30) || (estTime.Hour > 9 && estTime.Hour < 16) || (estTime.Hour == 16 && estTime.Minute == 0))
             {
-                _importMarketData.ImportMarketData();
+                await _importMarketData.ImportMarketData();
             }
             else
             {
