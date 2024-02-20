@@ -123,7 +123,7 @@ namespace TradeFunctions.ImportMarketData
             DateTime roundedTime = now.AddMinutes(-minutesToSubtract).AddSeconds(-now.Second);
 
             // Ensure the rounded time is always before the current time, if necessary, by subtracting additional minutes
-            if (roundedTime.Minute == now.Minute)
+            if (roundedTime.Minute == now.Minute + 2)
             {
                 roundedTime = roundedTime.AddMinutes(-15);
             }
