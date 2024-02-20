@@ -17,13 +17,12 @@ namespace TradeFunctions.ImportMarketData
         }
 
         [Function("ImportMarketData")]
-        public void Run([TimerTrigger("0 */15 13-21 * * 1-5")] TimerInfo myTimer)
+        public void Run([TimerTrigger("4 0 */15 13-21 * * 1-5")] TimerInfo myTimer)
         {
-            _logger.LogInformation($"C# Timer trigger function executed at: {DateTime.Now}");
             TimeZoneInfo estZone = TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time");
             DateTime estTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, estZone);
-
-
+            _logger.LogInformation($"C# Timer trigger function executed at EST: {estTime}");
+            
             // Check if current EST time is within the desired range (9:30 AM to 4:00 PM)
             if ((estTime.Hour == 9 && estTime.Minute >= 30) || (estTime.Hour > 9 && estTime.Hour < 16) || (estTime.Hour == 16 && estTime.Minute == 0))
             {
@@ -37,7 +36,7 @@ namespace TradeFunctions.ImportMarketData
 
             if (myTimer.ScheduleStatus is not null)
             {
-                _logger.LogInformation($"Next timer schedule at: {myTimer.ScheduleStatus.Next}");
+                _logger.LogInformation($"Next timer schedule at EST: {TimeZoneInfo.ConvertTimeFromUtc(myTimer.ScheduleStatus.Next, estZone)}");
             }
         }
     }
