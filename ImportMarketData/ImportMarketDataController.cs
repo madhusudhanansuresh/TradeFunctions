@@ -17,7 +17,7 @@ namespace TradeFunctions.ImportMarketData
         }
 
         [Function("ImportMarketData")]
-        public void Run([TimerTrigger("0 */15 13-21 * * 1-5")] TimerInfo myTimer)
+        public void Run([TimerTrigger("1 */15 13-21 * * 1-5")] TimerInfo myTimer)
         {
             TimeZoneInfo estZone = TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time");
             DateTime estTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, estZone);
@@ -36,7 +36,7 @@ namespace TradeFunctions.ImportMarketData
 
             if (myTimer.ScheduleStatus is not null)
             {
-                _logger.LogInformation($"Next timer schedule at EST: {TimeZoneInfo.ConvertTimeFromUtc(myTimer.ScheduleStatus.Next, estZone)}");
+                _logger.LogInformation($"Next timer schedule at EST: {myTimer.ScheduleStatus.Next}");
             }
         }
     }
