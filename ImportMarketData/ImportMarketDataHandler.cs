@@ -48,8 +48,10 @@ namespace TradeFunctions.ImportMarketData
                     var tickerNames = tickers.Select(x => x.TickerName).ToList();
 
                     var startDate = GetRoundedTime();
+                     _logger.LogInformation($"startDate: {startDate}");
 
                     var endDate = GetRoundedTime();
+                     _logger.LogInformation($"endDate: {endDate}");
 
                     var stockDataResponse = await _twelveDataService.FetchStockDataAsync(tickerNames, [timeFrame], startDate, endDate, 1, methodContainer);
 
