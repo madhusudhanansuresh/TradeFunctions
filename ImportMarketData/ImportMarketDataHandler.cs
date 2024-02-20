@@ -80,7 +80,7 @@ namespace TradeFunctions.ImportMarketData
 
                     await dbContext.SaveChangesAsync(cancellationToken);
 
-                    if (tickers.Count != stockDataResponse.Data.Count || stockDataResponse.Data.Any(x => Convert.ToInt32(x.Values[0].Volume) <= 0))
+                    if (tickers.Count != stockDataResponse.Data.Count)
                     {
                         _pushOverService.SendNotificationAsync($"Scheduled Time series import failed Total count: {tickers.Count} not matching retrieved count {stockDataResponse.Data.Count}", "Failure - Time Series Import", "", "", "1");
                         _logger.LogInformation("Scheduled Time series import failed Total count: {tickers.Count} not matching retrieved count {stockDataResponse.Data.Count}");
