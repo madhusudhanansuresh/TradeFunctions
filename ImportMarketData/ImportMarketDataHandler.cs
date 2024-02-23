@@ -41,6 +41,7 @@ namespace TradeFunctions.ImportMarketData
                 methodContainer.AddMethod(new SimpleMethod("time_series"));
                 using (var dbContext = new TradeContext(_dbConnectionStringService.ConnectionString()))
                 {
+                    var removeCount = 0;
                     var timeFrame = "15min";
 
                     var tickers = await dbContext.Tickers.Where(x => x.Active == true).ToListAsync();
@@ -68,6 +69,7 @@ namespace TradeFunctions.ImportMarketData
 
                         if (stockData.Values == null)
                         {
+                            removeCount++;
                             _logger.LogWarning("Values in stockData is null. Meta: {Meta}", stockData.Meta);
                             continue; // Skip this iteration.
                         }
@@ -80,7 +82,7 @@ namespace TradeFunctions.ImportMarketData
 
                     await dbContext.SaveChangesAsync(cancellationToken);
 
-                    if (tickers.Count != stockDataResponse.Data.Count)
+                    if (tickers.Count != stockDataResponse.Data.Count - removeCount)
                     {
                         _pushOverService.SendNotificationAsync($"Scheduled Time series import failed Total count: {tickers.Count} not matching retrieved count {stockDataResponse.Data.Count}", "Failure - Time Series Import", "", "", "1");
                         _logger.LogInformation($"Scheduled Time series import failed Total count: {tickers.Count} not matching retrieved count {stockDataResponse.Data.Count}");
