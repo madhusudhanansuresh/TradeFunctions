@@ -191,7 +191,7 @@ namespace TradeFunctions.ImportMarketData
             if (!isSuccessful)
             {
                 string tickerNamesConcatenated = String.Join(", ", tickerNames);
-                _logger.LogError($"Failed to complete operation after 3 retries due to invalid stock data. Tickers: {tickerNamesConcatenated}.");
+                _logger.LogError($"Failed to complete operation after 3 retries due to invalid stock data. Tickers for time period: {startDate} and stocks: {tickerNamesConcatenated}.");
                 await _pushOverService.SendNotificationAsync($"Failed to complete operation after 3 retries due to invalid stock data. Tickers: {tickerNamesConcatenated}", "Failure - Time Series Import", "", "", "1");
             }
         }
