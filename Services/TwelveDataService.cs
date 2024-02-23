@@ -18,13 +18,16 @@ namespace TradeFunctions.Services
         private readonly string _apiKey = "c0ab0a8407ed42e4a89605bc8077e141"; // Securely retrieve this
         public TwelveDataService()
         {
-            _client = new HttpClient();
+            _client = new HttpClient
+            {
+                Timeout = TimeSpan.FromSeconds(300)
+            };
+
         }
 
         public async Task<StockDataResponse> FetchStockDataAsync(List<string> symbols, List<string> intervals, string startDate, string endDate, int outputSize, MethodContainer methodContainer)
         {
             var requestUri = $"https://api.twelvedata.com/complex_data?apikey={_apiKey}";
-            _client.Timeout = TimeSpan.FromSeconds(300);
 
             // Function to split the symbols into chunks
             static List<List<T>> SplitList<T>(List<T> items, int size = 5)
@@ -109,7 +112,5 @@ namespace TradeFunctions.Services
                 return JsonConvert.DeserializeObject<StockDataResponse>(body);
             }
         }
-
-
     }
 }
