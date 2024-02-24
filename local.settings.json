@@ -4,5 +4,9 @@
     "AzureWebJobsStorage": "UseDevelopmentStorage=true",
     "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
     "TradeDatabase":"Host=devtradepostgres.postgres.database.azure.com;Database=postgres;Username=postgres_admin;Password=Sql-4567"
+  },
+  "Host": {
+    "LocalHttpPort": 7071,
+    "CORS": "*"
   }
 }
