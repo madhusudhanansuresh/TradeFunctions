@@ -25,7 +25,9 @@ namespace TradeFunctions.ListMarketStatistics
         public async Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Function, "post")] HttpRequestData request)
         {
             _logger.LogInformation("C# HTTP trigger function processed a request.");
-            var data = await _listMarketStatisticsHandler.ListStatistics();
+             string requestBody = await new StreamReader(request.Body).ReadToEndAsync();
+            var listMarketStatisticsRequest = JsonSerializer.Deserialize<ListMarketStatisticsRequest>(requestBody);
+            var data = await _listMarketStatisticsHandler.ListStatistics(listMarketStatisticsRequest);
             var response = request.CreateResponse(HttpStatusCode.OK);
             response.Headers.Add("Content-Type", "application/json; charset=utf-8");
 

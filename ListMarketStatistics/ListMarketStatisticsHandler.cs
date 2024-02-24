@@ -8,7 +8,7 @@ namespace TradeFunctions.ListMarketStatistics
 {
     public interface IListMarketStatisticsHandler
     {
-        Task<ListMarketStatisticsResponse> ListStatistics(CancellationToken cancellationToken = default);
+        Task<ListMarketStatisticsResponse> ListStatistics(ListMarketStatisticsRequest listMarketStatisticsRequest, CancellationToken cancellationToken = default);
     }
 
     public class ListMarketStatisticsHandler : IListMarketStatisticsHandler
@@ -20,7 +20,7 @@ namespace TradeFunctions.ListMarketStatistics
             _dbConnectionStringService = dbConnectionStringService;
         }
 
-        public async Task<ListMarketStatisticsResponse> ListStatistics(CancellationToken cancellationToken = default)
+        public async Task<ListMarketStatisticsResponse> ListStatistics(ListMarketStatisticsRequest listMarketStatisticsRequest, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -38,7 +38,7 @@ namespace TradeFunctions.ListMarketStatistics
                     var tickerAtrs = await dbContext.DailyIndicators.ToDictionaryAsync(di => di.TickerId, di => di.Atr, cancellationToken);
 
                     // Create tasks for each ticker
-                    var tasks = tickers.Select(ticker => ProcessTickerAsync(ticker, stockPrices, spyPrices, tickerAtrs, cancellationToken)).ToList();
+                    var tasks = tickers.Select(ticker => ProcessTickerAsync(listMarketStatisticsRequest, ticker, stockPrices, spyPrices, tickerAtrs, cancellationToken)).ToList();
 
                     // Wait for all tasks to complete
                     var results = await Task.WhenAll(tasks);
@@ -56,7 +56,7 @@ namespace TradeFunctions.ListMarketStatistics
             }
         }
 
-        private async Task<MarketStatistics> ProcessTickerAsync(Ticker ticker, List<StockPrice> stockPrices, List<StockPrice> spyPrices, Dictionary<int, decimal?> tickerAtrs, CancellationToken cancellationToken)
+        private async Task<MarketStatistics> ProcessTickerAsync(ListMarketStatisticsRequest listMarketStatisticsRequest, Ticker ticker, List<StockPrice> stockPrices, List<StockPrice> spyPrices, Dictionary<int, decimal?> tickerAtrs, CancellationToken cancellationToken)
         {
             var tickerPrices = stockPrices.Where(x => x.TickerId == ticker.Id).ToList();
             tickerAtrs.TryGetValue(ticker.Id, out var tickerAtr);
@@ -69,11 +69,11 @@ namespace TradeFunctions.ListMarketStatistics
                     Ticker = ticker.TickerName,
                     ATR = tickerAtr.HasValue ? Math.Round(tickerAtr.Value, 2) : (decimal?)null,
                     Price = tickerPrices.OrderByDescending(x => x.Timestamp).FirstOrDefault().ClosePrice,
-                    FifteenMin = new() { Rvol = CalculateRVOL("15Min", tickerPrices), RsRw = CalculateRelativeStrength("15Min", tickerPrices, spyPrices, spyAtr, tickerAtr) },
-                    ThirtyMin = new() { Rvol = CalculateRVOL("30Min", tickerPrices), RsRw = CalculateRelativeStrength("30Min", tickerPrices, spyPrices, spyAtr, tickerAtr) },
-                    OneHour = new() { Rvol = CalculateRVOL("1Hour", tickerPrices), RsRw = CalculateRelativeStrength("1Hour", tickerPrices, spyPrices, spyAtr, tickerAtr) },
-                    TwoHour = new() { Rvol = CalculateRVOL("2Hour", tickerPrices), RsRw = CalculateRelativeStrength("2Hour", tickerPrices, spyPrices, spyAtr, tickerAtr) },
-                    FourHour = new() { Rvol = CalculateRVOL("4Hour", tickerPrices), RsRw = CalculateRelativeStrength("4Hour", tickerPrices, spyPrices, spyAtr, tickerAtr) },
+                    FifteenMin = new() { Rvol = CalculateRVOL("15Min", listMarketStatisticsRequest, tickerPrices), RsRw = CalculateRelativeStrength("15Min", listMarketStatisticsRequest, tickerPrices, spyPrices, spyAtr, tickerAtr) },
+                    ThirtyMin = new() { Rvol = CalculateRVOL("30Min", listMarketStatisticsRequest, tickerPrices), RsRw = CalculateRelativeStrength("30Min", listMarketStatisticsRequest, tickerPrices, spyPrices, spyAtr, tickerAtr) },
+                    OneHour = new() { Rvol = CalculateRVOL("1Hour", listMarketStatisticsRequest, tickerPrices), RsRw = CalculateRelativeStrength("1Hour", listMarketStatisticsRequest, tickerPrices, spyPrices, spyAtr, tickerAtr) },
+                    TwoHour = new() { Rvol = CalculateRVOL("2Hour", listMarketStatisticsRequest, tickerPrices), RsRw = CalculateRelativeStrength("2Hour", listMarketStatisticsRequest, tickerPrices, spyPrices, spyAtr, tickerAtr) },
+                    FourHour = new() { Rvol = CalculateRVOL("4Hour", listMarketStatisticsRequest, tickerPrices), RsRw = CalculateRelativeStrength("4Hour", listMarketStatisticsRequest, tickerPrices, spyPrices, spyAtr, tickerAtr) },
                     Timestamp = tickerPrices.OrderByDescending(x => x.Timestamp).FirstOrDefault().Timestamp
                 };
 
@@ -83,11 +83,17 @@ namespace TradeFunctions.ListMarketStatistics
             return null; // Return null if no prices found for the ticker
         }
 
-        private static decimal? CalculateRelativeStrength(string timeFrame, List<StockPrice> tickerPrices, List<StockPrice> spyPrices, decimal? spyAtr, decimal? stockAtr)
+        private static decimal? CalculateRelativeStrength(string timeFrame, ListMarketStatisticsRequest listMarketStatisticsRequest, List<StockPrice> tickerPrices, List<StockPrice> spyPrices, decimal? spyAtr, decimal? stockAtr)
         {
             try
             {
                 var endTimeStamp = tickerPrices.OrderByDescending(x => x.Timestamp).Select(x => x.Timestamp).FirstOrDefault();
+
+                if (!string.IsNullOrWhiteSpace(listMarketStatisticsRequest.EndDateTime))
+                {
+                    endTimeStamp = GetRoundedEndDateTime(listMarketStatisticsRequest.EndDateTime);
+                }
+
                 var startTimeStamp = TimeframeStart(timeFrame, endTimeStamp);
 
                 if (!tickerPrices.Any(x => x.Timestamp == startTimeStamp))
@@ -106,14 +112,14 @@ namespace TradeFunctions.ListMarketStatistics
                 var closingSpyPrice = closingSpyPriceRecord?.ClosePrice;
 
                 decimal? stockMovePercentage = (closingPrice - openingPrice) / openingPrice;
-                decimal? spyMovePercentage = (closingSpyPrice - openingSpyPrice) /openingSpyPrice;
+                decimal? spyMovePercentage = (closingSpyPrice - openingSpyPrice) / openingSpyPrice;
 
                 decimal? relativeStrength = stockMovePercentage - spyMovePercentage;
 
                 decimal? atrAdjustmentFactor = stockAtr / spyAtr;
-                
+
                 decimal? adjustedRelativeStrength = (relativeStrength / atrAdjustmentFactor) * 100;
-                
+
                 return adjustedRelativeStrength.HasValue ? Math.Round(adjustedRelativeStrength.Value, 2) : (decimal?)null;
             }
             catch (Exception ex)
@@ -123,7 +129,7 @@ namespace TradeFunctions.ListMarketStatistics
         }
 
 
-        public static decimal? CalculateRVOL(string timeFrame, List<StockPrice> tickerPrices)
+        public static decimal? CalculateRVOL(string timeFrame, ListMarketStatisticsRequest listMarketStatisticsRequest, List<StockPrice> tickerPrices)
         {
             try
             {
@@ -133,13 +139,13 @@ namespace TradeFunctions.ListMarketStatistics
                 var totalDaysChecked = 0;
                 var daysWithData = 0;
 
-                var lastPrice = tickerPrices.OrderByDescending(x => x.Timestamp).FirstOrDefault();
-                if (lastPrice == null)
+                var endTimeStamp = tickerPrices.OrderByDescending(x => x.Timestamp).Select(x => x.Timestamp).FirstOrDefault();
+
+                if (!string.IsNullOrWhiteSpace(listMarketStatisticsRequest.EndDateTime))
                 {
-                    throw new InvalidOperationException("Unable to find any timestamps in ticker prices.");
+                    endTimeStamp = GetRoundedEndDateTime(listMarketStatisticsRequest.EndDateTime);
                 }
 
-                var endTimeStamp = lastPrice.Timestamp;
                 var startTimeStamp = TimeframeStart(timeFrame, endTimeStamp);
 
                 var startPrice = tickerPrices.Where(x => x.Timestamp == startTimeStamp).Any();
@@ -148,7 +154,6 @@ namespace TradeFunctions.ListMarketStatistics
                 {
                     return null;
                 }
-
 
                 var sumOfVolume = tickerPrices
                                     .Where(x => x.Timestamp >= startTimeStamp && x.Timestamp <= endTimeStamp)
@@ -217,5 +222,17 @@ namespace TradeFunctions.ListMarketStatistics
 
             return timeStamp.Value.AddMinutes(-minutesBack);
         }
+
+        public static DateTime? GetRoundedEndDateTime(string endDateTimeString)
+        {
+            DateTime endTimeStamp = Convert.ToDateTime(endDateTimeString);
+
+            int minutesToSubtract = endTimeStamp.Minute % 15;
+            endTimeStamp = endTimeStamp.AddMinutes(-minutesToSubtract);
+            endTimeStamp = new DateTime(endTimeStamp.Year, endTimeStamp.Month, endTimeStamp.Day, endTimeStamp.Hour, endTimeStamp.Minute, 0);
+
+            return endTimeStamp;
+        }
+
     }
 }
