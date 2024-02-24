@@ -228,7 +228,7 @@ namespace TradeFunctions.ListMarketStatistics
             DateTime endTimeStamp = Convert.ToDateTime(endDateTimeString);
 
             int minutesToSubtract = endTimeStamp.Minute % 15;
-            endTimeStamp = endTimeStamp.AddMinutes(-minutesToSubtract);
+            endTimeStamp = endTimeStamp;
             endTimeStamp = new DateTime(endTimeStamp.Year, endTimeStamp.Month, endTimeStamp.Day, endTimeStamp.Hour, endTimeStamp.Minute, 0);
 
             return endTimeStamp;
