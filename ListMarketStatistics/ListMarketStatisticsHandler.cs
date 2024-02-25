@@ -2,7 +2,7 @@ using System.Collections.Concurrent;
 using AssessmentDeck.Services;
 using Microsoft.EntityFrameworkCore;
 using TradeFunctions.Models.Postgres.TradeContext;
-using TradeFunctions.Services;
+using TradeFunctions.ImportDailyIndicators;
 
 namespace TradeFunctions.ListMarketStatistics
 {
@@ -13,11 +13,13 @@ namespace TradeFunctions.ListMarketStatistics
 
     public class ListMarketStatisticsHandler : IListMarketStatisticsHandler
     {
+        private readonly IImportDailyIndicatorsHandler _importDailyIndicatorsHandler;
         public IDbConnectionStringService _dbConnectionStringService { get; }
 
-        public ListMarketStatisticsHandler(IDbConnectionStringService dbConnectionStringService)
+        public ListMarketStatisticsHandler(IDbConnectionStringService dbConnectionStringService, IImportDailyIndicatorsHandler importDailyIndicatorsHandler)
         {
             _dbConnectionStringService = dbConnectionStringService;
+            _importDailyIndicatorsHandler = importDailyIndicatorsHandler;
         }
 
         public async Task<ListMarketStatisticsResponse> ListStatistics(ListMarketStatisticsRequest listMarketStatisticsRequest, CancellationToken cancellationToken = default)
@@ -27,6 +29,13 @@ namespace TradeFunctions.ListMarketStatistics
                 var listMarketStatistics = new List<MarketStatistics>();
                 using (var dbContext = new TradeContext(_dbConnectionStringService.ConnectionString()))
                 {
+                    var lastUpdatedDailyIndicator = await dbContext.DailyIndicators.Select(x => x.Timestamp).FirstOrDefaultAsync();
+
+                    if (!string.IsNullOrWhiteSpace(listMarketStatisticsRequest.EndDateTime) && lastUpdatedDailyIndicator?.ToString("yyyy-MM-dd HH:mm:ss") != listMarketStatisticsRequest.EndDateTime)
+                    {
+                        await _importDailyIndicatorsHandler.ImportATR(listMarketStatisticsRequest.EndDateTime.Substring(0, 10) + " 00:00:00");
+                    }
+
                     var thirtyDaysAgo = DateTime.Now.AddDays(-30);
 
                     var tickers = await dbContext.Tickers.Where(x => x.Active == true).ToListAsync(cancellationToken);

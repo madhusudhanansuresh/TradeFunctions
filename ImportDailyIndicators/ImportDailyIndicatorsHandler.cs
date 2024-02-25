@@ -9,7 +9,7 @@ namespace TradeFunctions.ImportDailyIndicators
 {
     public interface IImportDailyIndicatorsHandler
     {
-        Task<bool> ImportATR(CancellationToken cancellationToken = default);
+        Task<bool> ImportATR(string Timestamp, CancellationToken cancellationToken = default);
     }
 
     public class ImportDailyIndicatorsHandler : IImportDailyIndicatorsHandler
@@ -28,7 +28,7 @@ namespace TradeFunctions.ImportDailyIndicators
             _pushOverService = pushoverService;
         }
 
-        public async Task<bool> ImportATR(CancellationToken cancellationToken = default)
+        public async Task<bool> ImportATR(string Timestamp, CancellationToken cancellationToken = default)
         {
             _logger.LogInformation("Starting ImportATR operation.");
             try
@@ -46,7 +46,7 @@ namespace TradeFunctions.ImportDailyIndicators
                     var tickerNames = tickers.Select(x => x.TickerName).ToList();
 
                     _logger.LogInformation($"Fetching stock data for tickers: {string.Join(", ", tickers)}.");
-                    var stockDataResponse = await _twelveDataService.FetchStockDataAsync(tickerNames, [timeFrame], "", "", 1, methodContainer);
+                    var stockDataResponse = await _twelveDataService.FetchStockDataAsync(tickerNames, [timeFrame], Timestamp, "", 1, methodContainer);
 
 
                     dbContext.DailyIndicators.RemoveRange(dbContext.DailyIndicators);
