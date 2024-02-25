@@ -205,7 +205,6 @@ namespace TradeFunctions.ListMarketStatistics
             }
             catch (Exception ex)
             {
-                // Assuming each StockPrice has a Ticker property which in turn has a TickerName.
                 var tickerName = tickerPrices.FirstOrDefault()?.Ticker?.TickerName ?? "Unknown";
                 throw new Exception($"An error occurred while calculating RVOL for ticker {tickerName}: {ex.Message}", ex);
             }
