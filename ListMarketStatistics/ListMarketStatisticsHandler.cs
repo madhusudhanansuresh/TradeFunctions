@@ -40,14 +40,22 @@ namespace TradeFunctions.ListMarketStatistics
 
                     var tickers = await dbContext.Tickers.Where(x => x.Active == true).ToListAsync(cancellationToken);
 
-                    var stockPrices = await dbContext.StockPrices.Where(x => x.Timestamp >= thirtyDaysAgo).ToListAsync(cancellationToken);
+                    var stockPrices = dbContext.StockPrices.Where(x => x.Timestamp >= thirtyDaysAgo); 
 
-                    var spyPrices = stockPrices.Where(x => x.TickerId == 529).ToList();
+                    if(!string.IsNullOrWhiteSpace(listMarketStatisticsRequest.EndDateTime))
+                    {
+                        stockPrices = dbContext.StockPrices.Where(x => x.Timestamp <= Convert.ToDateTime(listMarketStatisticsRequest.EndDateTime));
+                    } 
+
+                    var revisedStockPrices = await stockPrices.ToListAsync(cancellationToken);
+
+
+                    var spyPrices = revisedStockPrices.Where(x => x.TickerId == 529).ToList();
 
                     var tickerAtrs = await dbContext.DailyIndicators.ToDictionaryAsync(di => di.TickerId, di => di.Atr, cancellationToken);
 
                     // Create tasks for each ticker
-                    var tasks = tickers.Select(ticker => ProcessTickerAsync(listMarketStatisticsRequest, ticker, stockPrices, spyPrices, tickerAtrs, cancellationToken)).ToList();
+                    var tasks = tickers.Select(ticker => ProcessTickerAsync(listMarketStatisticsRequest, ticker, revisedStockPrices, spyPrices, tickerAtrs, cancellationToken)).ToList();
 
                     // Wait for all tasks to complete
                     var results = await Task.WhenAll(tasks);
@@ -89,7 +97,7 @@ namespace TradeFunctions.ListMarketStatistics
                 return marketStatistics;
             }
 
-            return null; // Return null if no prices found for the ticker
+            return null;
         }
 
         private static decimal? CalculateRelativeStrength(string timeFrame, ListMarketStatisticsRequest listMarketStatisticsRequest, List<StockPrice> tickerPrices, List<StockPrice> spyPrices, decimal? spyAtr, decimal? stockAtr)
@@ -144,7 +152,7 @@ namespace TradeFunctions.ListMarketStatistics
             {
                 var volumesByDay = new List<decimal>();
 
-                var currentDate = DateTime.Now.Date;
+                var currentDate = string.IsNullOrWhiteSpace(listMarketStatisticsRequest.EndDateTime) ? DateTime.Now.Date : Convert.ToDateTime(listMarketStatisticsRequest.EndDateTime);
                 var totalDaysChecked = 0;
                 var daysWithData = 0;
 
