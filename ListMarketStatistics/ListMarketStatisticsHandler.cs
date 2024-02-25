@@ -36,7 +36,7 @@ namespace TradeFunctions.ListMarketStatistics
                         await _importDailyIndicatorsHandler.ImportATR(listMarketStatisticsRequest.EndDateTime.Substring(0, 10) + " 00:00:00");
                     }
 
-                    var thirtyDaysAgo = DateTime.Now.AddDays(-30);
+                    var thirtyDaysAgo = string.IsNullOrWhiteSpace(listMarketStatisticsRequest.EndDateTime) ? DateTime.Now.AddDays(-30) : Convert.ToDateTime(listMarketStatisticsRequest.EndDateTime).AddDays(-30);
 
                     var tickers = await dbContext.Tickers.Where(x => x.Active == true).ToListAsync(cancellationToken);
 
