@@ -145,6 +145,10 @@ namespace TradeFunctions.ListMarketStatistics
 
                     // Use proportions to determine relative strength when considering negative values
                     relativeStrength = stockChangeProportion / spyChangeProportion;
+                    if (stockAtrAdjusted < 0)
+                    {
+                        relativeStrength = -relativeStrength;
+                    }
                 }
                 else
                 {
