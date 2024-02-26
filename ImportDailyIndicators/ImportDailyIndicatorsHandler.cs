@@ -82,7 +82,7 @@ namespace TradeFunctions.ImportDailyIndicators
                     }
                     await dbContext.SaveChangesAsync(cancellationToken);
 
-                    if (tickers.Count != stockDataResponse.Data.Count || stockDataResponse.Data.Any(x => x.Values[0].ATR <= 0))
+                    if (tickers.Count != stockDataResponse.Data.Count)
                     {
                         _pushOverService.SendNotificationAsync("Scheduled Atr Import failed", "Failure - Atr Import", "", "", "1");
                         _logger.LogInformation("Issue in importing ATR");

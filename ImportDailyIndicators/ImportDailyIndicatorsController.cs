@@ -17,7 +17,7 @@ namespace TradeFunctions.ImportDailyIndicators
         }
 
         [Function("ImportATR")]
-        public async Task Run([TimerTrigger("0 0 12 * * 1-5")] TimerInfo myTimer)
+        public async Task Run([TimerTrigger("0 13 * * 1-5")] TimerInfo myTimer)
         {
             _logger.LogInformation($"C# Timer trigger function executed at: {DateTime.Now}");
             
