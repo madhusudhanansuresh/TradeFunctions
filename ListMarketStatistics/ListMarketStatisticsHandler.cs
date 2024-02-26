@@ -40,12 +40,12 @@ namespace TradeFunctions.ListMarketStatistics
 
                     var tickers = await dbContext.Tickers.Where(x => x.Active == true).ToListAsync(cancellationToken);
 
-                    var stockPrices = dbContext.StockPrices.Where(x => x.Timestamp >= thirtyDaysAgo); 
+                    var stockPrices = dbContext.StockPrices.Where(x => x.Timestamp >= thirtyDaysAgo);
 
-                    if(!string.IsNullOrWhiteSpace(listMarketStatisticsRequest.EndDateTime))
+                    if (!string.IsNullOrWhiteSpace(listMarketStatisticsRequest.EndDateTime))
                     {
                         stockPrices = dbContext.StockPrices.Where(x => x.Timestamp <= Convert.ToDateTime(listMarketStatisticsRequest.EndDateTime));
-                    } 
+                    }
 
                     var revisedStockPrices = await stockPrices.ToListAsync(cancellationToken);
 
@@ -128,16 +128,31 @@ namespace TradeFunctions.ListMarketStatistics
                 var openingSpyPrice = openingSpyPriceRecord?.OpenPrice;
                 var closingSpyPrice = closingSpyPriceRecord?.ClosePrice;
 
-                decimal? stockMovePercentage = (closingPrice - openingPrice) / openingPrice;
-                decimal? spyMovePercentage = (closingSpyPrice - openingSpyPrice) / openingSpyPrice;
+                decimal? stockMovement = closingPrice - openingPrice;
 
-                decimal? relativeStrength = stockMovePercentage - spyMovePercentage;
+                decimal? spyMovement = closingSpyPrice - openingSpyPrice;
 
-                decimal? atrAdjustmentFactor = stockAtr / spyAtr;
+                decimal? stockAtrAdjusted = (stockMovement / stockAtr);
+                decimal? spyAtrAdjusted = (spyMovement / spyAtr);
 
-                decimal? adjustedRelativeStrength = (relativeStrength / atrAdjustmentFactor) * 100;
+                decimal? relativeStrength;
+                if (stockAtrAdjusted < 0 || spyAtrAdjusted < 0)
+                {
+                    // If either is negative, calculate the total change and adjust the comparison
+                    decimal totalChange = Math.Abs(stockAtrAdjusted.Value) + Math.Abs(spyAtrAdjusted.Value);
+                    decimal stockChangeProportion = Math.Abs(stockAtrAdjusted.Value) / totalChange;
+                    decimal spyChangeProportion = Math.Abs(spyAtrAdjusted.Value) / totalChange;
 
-                return adjustedRelativeStrength.HasValue ? Math.Round(adjustedRelativeStrength.Value, 2) : (decimal?)null;
+                    // Use proportions to determine relative strength when considering negative values
+                    relativeStrength = stockChangeProportion / spyChangeProportion;
+                }
+                else
+                {
+                    // Directly calculate relative strength if both are positive
+                    relativeStrength = stockAtrAdjusted / spyAtrAdjusted;
+                }
+
+                return relativeStrength.HasValue ? relativeStrength : (decimal?)null;
             }
             catch (Exception ex)
             {
