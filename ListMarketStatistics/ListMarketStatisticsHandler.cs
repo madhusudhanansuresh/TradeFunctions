@@ -128,9 +128,9 @@ namespace TradeFunctions.ListMarketStatistics
                 var openingSpyPrice = openingSpyPriceRecord?.OpenPrice;
                 var closingSpyPrice = closingSpyPriceRecord?.ClosePrice;
 
-                decimal? stockMovement = closingPrice - openingPrice / openingPrice;
+                decimal? stockMovement = closingPrice - openingPrice;
 
-                decimal? spyMovement = closingSpyPrice - openingSpyPrice / openingSpyPrice;
+                decimal? spyMovement = closingSpyPrice - openingSpyPrice;
 
                 decimal? stockAtrAdjusted = (stockMovement / stockAtr);
                 decimal? spyAtrAdjusted = (spyMovement / spyAtr);
