@@ -44,7 +44,7 @@ namespace TradeFunctions.ImportMarketData
                 using (var dbContext = new TradeContext(_dbConnectionStringService.ConnectionString()))
                 {
                     var removeCount = 0;
-                    var timeFrame = "15min";
+                    var timeFrame = "5min";
 
                     var tickers = await dbContext.Tickers.Where(x => x.Active == true).ToListAsync();
 
@@ -123,10 +123,10 @@ namespace TradeFunctions.ImportMarketData
             TimeZoneInfo estZone = TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time");
             DateTime nowEst = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, estZone);
 
-            int minutesToSubtract = nowEst.Minute % 15;
+            int minutesToSubtract = nowEst.Minute % 5;
             DateTime roundedTimeEst = nowEst.AddMinutes(-minutesToSubtract).AddSeconds(-nowEst.Second);
 
-            roundedTimeEst = roundedTimeEst.AddMinutes(-15);
+            roundedTimeEst = roundedTimeEst.AddMinutes(-5);
 
             return roundedTimeEst.ToString("yyyy-MM-dd HH:mm:00");
         }
@@ -141,13 +141,13 @@ namespace TradeFunctions.ImportMarketData
             {
                 try
                 {
-                    var stockDataResponse = await _twelveDataService.FetchStockDataAsync(tickerNames, new List<string> { "15min" }, startDate, endDate, outputSize, methodContainer);
+                    var stockDataResponse = await _twelveDataService.FetchStockDataAsync(tickerNames, new List<string> { "5min" }, startDate, endDate, outputSize, methodContainer);
 
                     bool dataIsValid = true; // Assume data is valid initially.
 
                     using (var dbContext = new TradeContext(_dbConnectionStringService.ConnectionString()))
                     {
-                        var chartId = await dbContext.ChartPeriods.Where(x => x.TimeFrame == "15min").Select(x => x.Id).FirstOrDefaultAsync();
+                        var chartId = await dbContext.ChartPeriods.Where(x => x.TimeFrame == "5min").Select(x => x.Id).FirstOrDefaultAsync();
 
                         foreach (var stockData in stockDataResponse.Data)
                         {
