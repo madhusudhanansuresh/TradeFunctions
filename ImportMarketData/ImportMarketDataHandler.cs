@@ -1,10 +1,4 @@
-using System.Globalization;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using AssessmentDeck.Services;
-using Grpc.Core;
-using Microsoft.Azure.Functions.Worker.Extensions.Abstractions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using TradeFunctions.Models.Helpers;
