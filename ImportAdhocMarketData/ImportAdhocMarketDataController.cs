@@ -58,11 +58,3 @@ namespace TradeFunctions.ImportMarketData
         }
     }
 }
-
-//Request
-// {
-//     "symbols": [],
-//     "intervals": ["5min"],
-//     "startDate": "2024-01-04 00:00:00",
-//     "endDate": "2024-01-30 00:00:00"
-// }

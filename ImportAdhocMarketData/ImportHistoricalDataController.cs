@@ -21,12 +21,12 @@ namespace TradeFunctions.ImportMarketData
             _logger.LogInformation($"C# Timer trigger function executed at: {DateTime.Now}");
 
             var startDate = GetStartDate23DaysBackEST();
-            var endDate = GetRecent15MinuteMarkEST();
+            var endDate = GetRecent5MinuteMarkEST();
 
             var importRequest = new ImportAdhocMarketDataRequest
             {
                 Symbols = new List<string>(),
-                Intervals = new List<string> { "15min" },
+                Intervals = new List<string> { "5min" },
                 StartDate = startDate,
                 EndDate = endDate
             };
@@ -52,12 +52,12 @@ namespace TradeFunctions.ImportMarketData
             return startDateEST.ToString("yyyy-MM-dd HH:mm:ss");
         }
 
-        private static string GetRecent15MinuteMarkEST()
+        private static string GetRecent5MinuteMarkEST()
         {
             TimeZoneInfo estZone = TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time");
             DateTime currentTimeEST = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, estZone);
 
-            int minutes = currentTimeEST.Minute / 15 * 15;
+            int minutes = currentTimeEST.Minute / 5 * 5;
             DateTime roundedTimeEST = new DateTime(currentTimeEST.Year, currentTimeEST.Month, currentTimeEST.Day, currentTimeEST.Hour, minutes, 0);
 
             return roundedTimeEST.ToString("yyyy-MM-dd HH:mm:ss");
