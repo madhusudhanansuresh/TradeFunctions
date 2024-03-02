@@ -141,7 +141,7 @@ namespace TradeFunctions.ListMarketStatistics
             }
 
             // Calculate Relative Volume (RVOL)
-            var rvol = todayVolume / averageHistoricalVolume;
+            var rvol = (todayVolume / averageHistoricalVolume) * 100;
             return Math.Round(rvol, 2);
         }
 
