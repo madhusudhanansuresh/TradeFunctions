@@ -95,26 +95,26 @@ namespace TradeFunctions.ListMarketStatistics
                         Rvol = CalculateRelativeVolume("15Min", listMarketStatisticsRequest, tickerPrices, isHistoricalStatistics),
                         RsRw = CalculateDynamicRRS("15Min", tickerPrices, spyPrices, listMarketStatisticsRequest, isHistoricalStatistics)
                     },
-                    ThirtyMin = new()
-                    {
-                        Rvol = CalculateRelativeVolume("30Min", listMarketStatisticsRequest, tickerPrices, isHistoricalStatistics),
-                        RsRw = CalculateDynamicRRS("30Min", tickerPrices, spyPrices, listMarketStatisticsRequest, isHistoricalStatistics)
-                    },
-                    OneHour = new()
-                    {
-                        Rvol = CalculateRelativeVolume("1Hour", listMarketStatisticsRequest, tickerPrices, isHistoricalStatistics),
-                        RsRw = CalculateDynamicRRS("1Hour", tickerPrices, spyPrices, listMarketStatisticsRequest, isHistoricalStatistics)
-                    },
-                    TwoHour = new()
-                    {
-                        Rvol = CalculateRelativeVolume("2Hour", listMarketStatisticsRequest, tickerPrices, isHistoricalStatistics),
-                        RsRw = CalculateDynamicRRS("2Hour", tickerPrices, spyPrices, listMarketStatisticsRequest, isHistoricalStatistics)
-                    },
-                    FourHour = new()
-                    {
-                        Rvol = CalculateRelativeVolume("4Hour", listMarketStatisticsRequest, tickerPrices, isHistoricalStatistics),
-                        RsRw = CalculateDynamicRRS("4Hour", tickerPrices, spyPrices, listMarketStatisticsRequest, isHistoricalStatistics)
-                    },
+                    // ThirtyMin = new()
+                    // {
+                    //     Rvol = CalculateRelativeVolume("30Min", listMarketStatisticsRequest, tickerPrices, isHistoricalStatistics),
+                    //     RsRw = CalculateDynamicRRS("30Min", tickerPrices, spyPrices, listMarketStatisticsRequest, isHistoricalStatistics)
+                    // },
+                    // OneHour = new()
+                    // {
+                    //     Rvol = CalculateRelativeVolume("1Hour", listMarketStatisticsRequest, tickerPrices, isHistoricalStatistics),
+                    //     RsRw = CalculateDynamicRRS("1Hour", tickerPrices, spyPrices, listMarketStatisticsRequest, isHistoricalStatistics)
+                    // },
+                    // TwoHour = new()
+                    // {
+                    //     Rvol = CalculateRelativeVolume("2Hour", listMarketStatisticsRequest, tickerPrices, isHistoricalStatistics),
+                    //     RsRw = CalculateDynamicRRS("2Hour", tickerPrices, spyPrices, listMarketStatisticsRequest, isHistoricalStatistics)
+                    // },
+                    // FourHour = new()
+                    // {
+                    //     Rvol = CalculateRelativeVolume("4Hour", listMarketStatisticsRequest, tickerPrices, isHistoricalStatistics),
+                    //     RsRw = CalculateDynamicRRS("4Hour", tickerPrices, spyPrices, listMarketStatisticsRequest, isHistoricalStatistics)
+                    // },
                     Timestamp = tickerPrices.OrderByDescending(x => x.Timestamp).FirstOrDefault().Timestamp
                 };
 
@@ -123,48 +123,32 @@ namespace TradeFunctions.ListMarketStatistics
 
             return null;
         }
-        public static decimal? CalculateRelativeVolume(string timeFrame, ListMarketStatisticsRequest listMarketStatisticsRequest, List<StockPrice> prices, bool isHistoricalStatistics)
-        {
-            var periodCount = PeriodCount(timeFrame);
-            // Assuming each StockPrice represents a 5-minute interval
-            var latestTimestamp = prices.Max(p => p.Timestamp.Value);
-
-            // Calculate today's volume for the specified period
-            var todayVolume = CalculatePeriodVolume(prices, latestTimestamp, periodCount);
-
-            // Calculate average volume for the same period over the last 14 days
-            var averageHistoricalVolume = CalculateHistoricalAverageVolume(prices, latestTimestamp, periodCount, 14);
-
-            if (averageHistoricalVolume == 0)
-            {
-                return null; // Avoid division by zero
-            }
-
-            // Calculate Relative Volume (RVOL)
-            var rvol = (todayVolume / averageHistoricalVolume) * 100;
-            return Math.Round(rvol, 2);
-        }
-
         public static decimal CalculateDynamicRRS(string timeFrame, List<StockPrice> tickerPrices, List<StockPrice> spyPrices, ListMarketStatisticsRequest listMarketStatisticsRequest, bool isHistoricalStatistics)
         {
-            var periodCount = PeriodCount(timeFrame);
-            tickerPrices = tickerPrices.OrderBy(p => p.Timestamp).ToList();
-            spyPrices = spyPrices.OrderBy(p => p.Timestamp).ToList();
+            var periodCount = GetPeriodCountFromTimeFrame(timeFrame);
+
+            var expectedCount = 50 + periodCount;
+            // Ensure there are enough data points
+            if (tickerPrices.Count < expectedCount || spyPrices.Count < expectedCount)
+                return 0;
+
+            // Focus on the 6 most recent records for the 30-minute window
+            var recentTickerPrices = tickerPrices.Take(6).ToList();
+            var recentSpyPrices = spyPrices.Take(6).ToList();
 
             List<decimal> rrsValues = new List<decimal>();
 
-            for (int i = 50; i < tickerPrices.Count - periodCount; i++)
+            for (int i = 0; i < periodCount; i++) // Loop through each of the 6 intervals
             {
-                var tickerSegmentATR = tickerPrices.Skip(i - 50).Take(50).ToList();
-                var tickerSegmentRRS = tickerPrices.Skip(i).Take(periodCount).ToList();
-                var spySegmentATR = spyPrices.Skip(i - 50).Take(50).ToList();
-                var spySegmentRRS = spyPrices.Skip(i).Take(periodCount).ToList();
-
+                var tickerSegmentATR = tickerPrices.Skip(i + periodCount).Take(50).ToList();
+                var spySegmentATR = spyPrices.Skip(i + periodCount).Take(50).ToList();
+                
+                // Assuming CalculateATR and other necessary calculations are adjusted to use just the required interval
                 decimal tickerATR = CalculateATR(tickerSegmentATR);
                 decimal spyATR = CalculateATR(spySegmentATR);
 
-                decimal tickerPriceChange = tickerSegmentRRS.Last().ClosePrice.Value - tickerSegmentRRS.First().ClosePrice.Value;
-                decimal spyPriceChange = spySegmentRRS.Last().ClosePrice.Value - spySegmentRRS.First().ClosePrice.Value;
+                decimal tickerPriceChange = recentTickerPrices[i].ClosePrice.Value - recentTickerPrices[i].OpenPrice.Value;
+                decimal spyPriceChange = recentSpyPrices[i].ClosePrice.Value - recentSpyPrices[i].OpenPrice.Value;
 
                 decimal spyPowerIndex = spyPriceChange / spyATR;
                 decimal expectedChange = spyPowerIndex * tickerATR;
@@ -173,9 +157,37 @@ namespace TradeFunctions.ListMarketStatistics
                 rrsValues.Add(rrs);
             }
 
-            return rrsValues.Any() ? rrsValues.Average() : 0;
+            // Average the RRS values for the 30-minute window
+            return rrsValues.Average();
         }
 
+        private static decimal CalculateATR(List<StockPrice> prices)
+        {
+            var atrValues = prices.Skip(1).Select((price, index) => CalculateTrueRange(price, prices[index])).ToList();
+            return atrValues.Any() ? atrValues.Average() : 0;
+        }
+
+        private static decimal CalculateTrueRange(StockPrice current, StockPrice previous)
+        {
+            var highMinusLow = current.HighPrice.Value - current.LowPrice.Value;
+            var highMinusClose = Math.Abs(current.HighPrice.Value - previous.ClosePrice.Value);
+            var lowMinusClose = Math.Abs(current.LowPrice.Value - previous.ClosePrice.Value);
+            return Math.Max(highMinusLow, Math.Max(highMinusClose, lowMinusClose));
+        }
+
+        private static int GetPeriodCountFromTimeFrame(string timeFrame)
+        {
+            // Convert timeFrame to period count
+            return timeFrame switch
+            {
+                "15Min" => 3,
+                "30Min" => 6,
+                "1Hour" => 12,
+                "2Hour" => 24,
+                "4Hour" => 48,
+                _ => throw new ArgumentException("Invalid time frame", nameof(timeFrame)),
+            };
+        }
 
         private static decimal CalculatePeriodVolume(List<StockPrice> prices, DateTime endDate, int periodCount)
         {
@@ -205,53 +217,26 @@ namespace TradeFunctions.ListMarketStatistics
             return historicalVolumes.Any() ? historicalVolumes.Average() : 0;
         }
 
-
-        private static decimal CalculateATR(List<StockPrice> prices)
+        public static decimal? CalculateRelativeVolume(string timeFrame, ListMarketStatisticsRequest listMarketStatisticsRequest, List<StockPrice> prices, bool isHistoricalStatistics)
         {
-            var atrValues = new List<decimal>();
-            for (int i = 1; i < prices.Count; i++)
-            {
-                var current = prices[i];
-                var previous = prices[i - 1];
-                var tr = new[]
-                {
-                    current.HighPrice.Value - current.LowPrice.Value,
-                    Math.Abs(current.HighPrice.Value - previous.ClosePrice.Value),
-                    Math.Abs(current.LowPrice.Value - previous.ClosePrice.Value)
-                }.Max();
+            var periodCount = GetPeriodCountFromTimeFrame(timeFrame);
+            // Assuming each StockPrice represents a 5-minute interval
+            var latestTimestamp = prices.Max(p => p.Timestamp.Value);
 
-                atrValues.Add(tr);
+            // Calculate today's volume for the specified period
+            var todayVolume = CalculatePeriodVolume(prices, latestTimestamp, periodCount);
+
+            // Calculate average volume for the same period over the last 14 days
+            var averageHistoricalVolume = CalculateHistoricalAverageVolume(prices, latestTimestamp, periodCount, 14);
+
+            if (averageHistoricalVolume == 0)
+            {
+                return null; // Avoid division by zero
             }
 
-            return atrValues.Any() ? atrValues.Average() : 0;
-        }
-
-        private static int PeriodCount(string timeFrame)
-        {
-            int count = 0;
-
-            switch (timeFrame)
-            {
-
-                case "15Min":
-                    count = 3;
-                    break;
-                case "30Min":
-                    count = 6;
-                    break;
-                case "1Hour":
-                    count = 6;
-                    break;
-                case "2Hour":
-                    count = 12;
-                    break;
-                case "4Hour":
-                    count = 24;
-                    break;
-                default:
-                    throw new ArgumentException("Invalid time frame");
-            }
-            return count;
+            // Calculate Relative Volume (RVOL)
+            var rvol = (todayVolume / averageHistoricalVolume) * 100;
+            return Math.Round(rvol, 2);
         }
     }
 }
