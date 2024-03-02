@@ -49,11 +49,9 @@ namespace TradeFunctions.ListMarketStatistics
                         stockPrices = dbContext.StockPrices.Where(x => x.Timestamp <= Convert.ToDateTime(listMarketStatisticsRequest.EndDateTime));
                     }
 
-
                     var tickers = await dbContext.Tickers.Where(x => x.Active == true).ToListAsync(cancellationToken);
 
                     var revisedStockPrices = await stockPrices.ToListAsync(cancellationToken);
-
 
                     var spyPrices = revisedStockPrices.Where(x => x.TickerId == 529).ToList();
 
