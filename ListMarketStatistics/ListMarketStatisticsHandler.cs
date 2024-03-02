@@ -32,12 +32,6 @@ namespace TradeFunctions.ListMarketStatistics
                 var listMarketStatistics = new List<MarketStatistics>();
                 using (var dbContext = new TradeContext(_dbConnectionStringService.ConnectionString()))
                 {
-                    var lastUpdatedDailyIndicator = await dbContext.DailyIndicators.Select(x => x.Timestamp).FirstOrDefaultAsync();
-
-                    if (isHistoricalStatistics && lastUpdatedDailyIndicator?.ToString("yyyy-MM-dd HH:mm:ss") != listMarketStatisticsRequest.EndDateTime)
-                    {
-                        await _importDailyIndicatorsHandler.ImportATR(listMarketStatisticsRequest.EndDateTime.Substring(0, 10) + " 00:00:00");
-                    }
 
                     var thirtyDaysAgo = DateTime.Now.AddDays(-30);
 
@@ -46,7 +40,7 @@ namespace TradeFunctions.ListMarketStatistics
                     if (isHistoricalStatistics)
                     {
                         thirtyDaysAgo = Convert.ToDateTime(listMarketStatisticsRequest.EndDateTime).AddDays(-30);
-                        stockPrices = dbContext.StockPrices.Where(x => x.Timestamp <= Convert.ToDateTime(listMarketStatisticsRequest.EndDateTime));
+                        stockPrices = dbContext.StockPrices.Where(x => x.Timestamp <= Convert.ToDateTime(listMarketStatisticsRequest.EndDateTime) && x.Timestamp >= thirtyDaysAgo);
                     }
 
                     var tickers = await dbContext.Tickers.Where(x => x.Active == true).ToListAsync(cancellationToken);
@@ -90,28 +84,28 @@ namespace TradeFunctions.ListMarketStatistics
                     Price = tickerPrices.OrderByDescending(x => x.Timestamp).FirstOrDefault().ClosePrice,
                     FifteenMin = new()
                     {
-                        Rvol = CalculateRelativeVolume("15Min", listMarketStatisticsRequest, tickerPrices, isHistoricalStatistics),
-                        RsRw = CalculateDynamicRRS("15Min", tickerPrices, spyPrices, listMarketStatisticsRequest, isHistoricalStatistics)
+                        Rvol = CalculateRelativeVolume("15Min", tickerPrices),
+                        RsRw = CalculateDynamicRRS("15Min", tickerPrices, spyPrices)
                     },
                     ThirtyMin = new()
                     {
-                        Rvol = CalculateRelativeVolume("30Min", listMarketStatisticsRequest, tickerPrices, isHistoricalStatistics),
-                        RsRw = CalculateDynamicRRS("30Min", tickerPrices, spyPrices, listMarketStatisticsRequest, isHistoricalStatistics)
+                        Rvol = CalculateRelativeVolume("30Min", tickerPrices),
+                        RsRw = CalculateDynamicRRS("30Min", tickerPrices, spyPrices)
                     },
                     OneHour = new()
                     {
-                        Rvol = CalculateRelativeVolume("1Hour", listMarketStatisticsRequest, tickerPrices, isHistoricalStatistics),
-                        RsRw = CalculateDynamicRRS("1Hour", tickerPrices, spyPrices, listMarketStatisticsRequest, isHistoricalStatistics)
+                        Rvol = CalculateRelativeVolume("1Hour", tickerPrices),
+                        RsRw = CalculateDynamicRRS("1Hour", tickerPrices, spyPrices)
                     },
                     TwoHour = new()
                     {
-                        Rvol = CalculateRelativeVolume("2Hour", listMarketStatisticsRequest, tickerPrices, isHistoricalStatistics),
-                        RsRw = CalculateDynamicRRS("2Hour", tickerPrices, spyPrices, listMarketStatisticsRequest, isHistoricalStatistics)
+                        Rvol = CalculateRelativeVolume("2Hour", tickerPrices),
+                        RsRw = CalculateDynamicRRS("2Hour", tickerPrices, spyPrices)
                     },
                     FourHour = new()
                     {
-                        Rvol = CalculateRelativeVolume("4Hour", listMarketStatisticsRequest, tickerPrices, isHistoricalStatistics),
-                        RsRw = CalculateDynamicRRS("4Hour", tickerPrices, spyPrices, listMarketStatisticsRequest, isHistoricalStatistics)
+                        Rvol = CalculateRelativeVolume("4Hour", tickerPrices),
+                        RsRw = CalculateDynamicRRS("4Hour", tickerPrices, spyPrices)
                     },
                     Timestamp = tickerPrices.OrderByDescending(x => x.Timestamp).FirstOrDefault().Timestamp
                 };
@@ -121,7 +115,7 @@ namespace TradeFunctions.ListMarketStatistics
 
             return null;
         }
-        public static decimal CalculateDynamicRRS(string timeFrame, List<StockPrice> tickerPrices, List<StockPrice> spyPrices, ListMarketStatisticsRequest listMarketStatisticsRequest, bool isHistoricalStatistics)
+        public static decimal CalculateDynamicRRS(string timeFrame, List<StockPrice> tickerPrices, List<StockPrice> spyPrices)
         {
             var periodCount = GetPeriodCountFromTimeFrame(timeFrame);
 
@@ -221,7 +215,7 @@ namespace TradeFunctions.ListMarketStatistics
         }
 
 
-        public static decimal? CalculateRelativeVolume(string timeFrame, ListMarketStatisticsRequest listMarketStatisticsRequest, List<StockPrice> prices, bool isHistoricalStatistics)
+        public static decimal? CalculateRelativeVolume(string timeFrame, List<StockPrice> prices)
         {
             try
             {
