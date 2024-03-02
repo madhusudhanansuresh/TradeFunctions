@@ -1,5 +1,6 @@
 using System;
 using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
 
 namespace TradeFunctions.ImportMarketData
@@ -8,7 +9,6 @@ namespace TradeFunctions.ImportMarketData
     {
         private readonly ILogger _logger;
         private readonly IImportAdhocMarketDataHandler _importMarketData;
-
         public ImportHistoricalDataController(ILoggerFactory loggerFactory, IImportAdhocMarketDataHandler importMarketData)
         {
             _logger = loggerFactory.CreateLogger<ImportHistoricalDataController>();
@@ -16,7 +16,7 @@ namespace TradeFunctions.ImportMarketData
         }
 
         [Function("ImportHistoricalDataController")]
-        public async Task Run([TimerTrigger("3 13 * * 1-5")] TimerInfo myTimer)
+        public async Task Run([TimerTrigger("0 * 9 * * 0,6")] TimerInfo myTimer)
         {
             _logger.LogInformation($"C# Timer trigger function executed at: {DateTime.Now}");
 
