@@ -16,7 +16,7 @@ namespace TradeFunctions.ImportMarketData
         }
 
         [Function("ImportHistoricalDataController")]
-        public async Task Run([TimerTrigger("0 * 9 * * 0,6")] TimerInfo myTimer)
+        public async Task Run([TimerTrigger("0 */5 9 * * 0,6")] TimerInfo myTimer)
         {
             _logger.LogInformation($"C# Timer trigger function executed at: {DateTime.Now}");
 
