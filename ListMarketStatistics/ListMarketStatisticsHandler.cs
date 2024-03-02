@@ -95,26 +95,26 @@ namespace TradeFunctions.ListMarketStatistics
                         Rvol = CalculateRelativeVolume("15Min", listMarketStatisticsRequest, tickerPrices, isHistoricalStatistics),
                         RsRw = CalculateDynamicRRS("15Min", tickerPrices, spyPrices, listMarketStatisticsRequest, isHistoricalStatistics)
                     },
-                    // ThirtyMin = new()
-                    // {
-                    //     Rvol = CalculateRelativeVolume("30Min", listMarketStatisticsRequest, tickerPrices, isHistoricalStatistics),
-                    //     RsRw = CalculateDynamicRRS("30Min", tickerPrices, spyPrices, listMarketStatisticsRequest, isHistoricalStatistics)
-                    // },
-                    // OneHour = new()
-                    // {
-                    //     Rvol = CalculateRelativeVolume("1Hour", listMarketStatisticsRequest, tickerPrices, isHistoricalStatistics),
-                    //     RsRw = CalculateDynamicRRS("1Hour", tickerPrices, spyPrices, listMarketStatisticsRequest, isHistoricalStatistics)
-                    // },
-                    // TwoHour = new()
-                    // {
-                    //     Rvol = CalculateRelativeVolume("2Hour", listMarketStatisticsRequest, tickerPrices, isHistoricalStatistics),
-                    //     RsRw = CalculateDynamicRRS("2Hour", tickerPrices, spyPrices, listMarketStatisticsRequest, isHistoricalStatistics)
-                    // },
-                    // FourHour = new()
-                    // {
-                    //     Rvol = CalculateRelativeVolume("4Hour", listMarketStatisticsRequest, tickerPrices, isHistoricalStatistics),
-                    //     RsRw = CalculateDynamicRRS("4Hour", tickerPrices, spyPrices, listMarketStatisticsRequest, isHistoricalStatistics)
-                    // },
+                    ThirtyMin = new()
+                    {
+                        Rvol = CalculateRelativeVolume("30Min", listMarketStatisticsRequest, tickerPrices, isHistoricalStatistics),
+                        RsRw = CalculateDynamicRRS("30Min", tickerPrices, spyPrices, listMarketStatisticsRequest, isHistoricalStatistics)
+                    },
+                    OneHour = new()
+                    {
+                        Rvol = CalculateRelativeVolume("1Hour", listMarketStatisticsRequest, tickerPrices, isHistoricalStatistics),
+                        RsRw = CalculateDynamicRRS("1Hour", tickerPrices, spyPrices, listMarketStatisticsRequest, isHistoricalStatistics)
+                    },
+                    TwoHour = new()
+                    {
+                        Rvol = CalculateRelativeVolume("2Hour", listMarketStatisticsRequest, tickerPrices, isHistoricalStatistics),
+                        RsRw = CalculateDynamicRRS("2Hour", tickerPrices, spyPrices, listMarketStatisticsRequest, isHistoricalStatistics)
+                    },
+                    FourHour = new()
+                    {
+                        Rvol = CalculateRelativeVolume("4Hour", listMarketStatisticsRequest, tickerPrices, isHistoricalStatistics),
+                        RsRw = CalculateDynamicRRS("4Hour", tickerPrices, spyPrices, listMarketStatisticsRequest, isHistoricalStatistics)
+                    },
                     Timestamp = tickerPrices.OrderByDescending(x => x.Timestamp).FirstOrDefault().Timestamp
                 };
 
@@ -142,7 +142,7 @@ namespace TradeFunctions.ListMarketStatistics
             {
                 var tickerSegmentATR = tickerPrices.Skip(i + periodCount).Take(50).ToList();
                 var spySegmentATR = spyPrices.Skip(i + periodCount).Take(50).ToList();
-                
+
                 // Assuming CalculateATR and other necessary calculations are adjusted to use just the required interval
                 decimal tickerATR = CalculateATR(tickerSegmentATR);
                 decimal spyATR = CalculateATR(spySegmentATR);
