@@ -29,44 +29,30 @@ namespace TradeFunctions.ListMarketStatistics
 
                 var isHistoricalStatistics = !string.IsNullOrWhiteSpace(listMarketStatisticsRequest.EndDateTime) ? true : false;
 
-                var listMarketStatistics = new List<MarketStatistics>();
+                //var listMarketStatistics = new List<MarketStatistics>();
                 using (var dbContext = new TradeContext(_dbConnectionStringService.ConnectionString()))
                 {
-                    var lastUpdatedDailyIndicator = await dbContext.DailyIndicators.Select(x => x.Timestamp).FirstOrDefaultAsync();
-
-                    if (isHistoricalStatistics && lastUpdatedDailyIndicator?.ToString("yyyy-MM-dd HH:mm:ss") != listMarketStatisticsRequest.EndDateTime)
-                    {
-                        await _importDailyIndicatorsHandler.ImportATR(listMarketStatisticsRequest.EndDateTime.Substring(0, 10) + " 00:00:00");
-                    }
-
-                    var thirtyDaysAgo = DateTime.Now.AddDays(-30);
-
-                    var stockPrices = dbContext.StockPrices.Where(x => x.Timestamp >= thirtyDaysAgo);
-
-                    if (isHistoricalStatistics)
-                    {
-                        thirtyDaysAgo = Convert.ToDateTime(listMarketStatisticsRequest.EndDateTime).AddDays(-30);
-                        stockPrices = dbContext.StockPrices.Where(x => x.Timestamp <= Convert.ToDateTime(listMarketStatisticsRequest.EndDateTime));
-                    }
-
-
+                    // Pre-fetch necessary data in a more efficient manner
                     var tickers = await dbContext.Tickers.Where(x => x.Active == true).ToListAsync(cancellationToken);
+                    var thirtyDaysAgo = isHistoricalStatistics ? Convert.ToDateTime(listMarketStatisticsRequest.EndDateTime).AddDays(-30) : DateTime.Now.AddDays(-30);
+                    var stockPrices = await dbContext.StockPrices.Where(x => x.Timestamp >= thirtyDaysAgo).ToListAsync(cancellationToken);
+                    var dailyIndicators = await dbContext.DailyIndicators.ToListAsync(cancellationToken);
 
-                    var revisedStockPrices = await stockPrices.ToListAsync(cancellationToken);
+                    var listMarketStatistics = new ConcurrentBag<MarketStatistics>();
 
+                    // Parallel processing of tickers
+                    var parallelOptions = new ParallelOptions { CancellationToken = cancellationToken, MaxDegreeOfParallelism = Environment.ProcessorCount };
+                    Parallel.ForEach(tickers, parallelOptions, ticker =>
+                    {
+                        var marketStatistics = ProcessTicker(ticker, stockPrices, dailyIndicators, isHistoricalStatistics);
+                        if (marketStatistics != null)
+                        {
+                            listMarketStatistics.Add(marketStatistics);
+                        }
+                    });
 
-                    var spyPrices = revisedStockPrices.Where(x => x.TickerId == 529).ToList();
-
-                    var tickerAtrs = await dbContext.DailyIndicators.ToDictionaryAsync(di => di.TickerId, di => di.Atr, cancellationToken);
-
-                    var tasks = tickers.Select(ticker => ProcessTickerAsync(listMarketStatisticsRequest, ticker, revisedStockPrices, spyPrices, tickerAtrs, isHistoricalStatistics, cancellationToken)).ToList();
-
-                    var results = await Task.WhenAll(tasks);
-
-                    listMarketStatistics.AddRange(results.Where(statistics => statistics != null));
+                    return new ListMarketStatisticsResponse { ListMarketStatistics = listMarketStatistics.ToList(), Success = true, Count = listMarketStatistics.Count };
                 }
-
-                return new ListMarketStatisticsResponse { ListMarketStatistics = listMarketStatistics, Success = true, Count = listMarketStatistics.Count };
             }
             catch (Exception ex)
             {
@@ -76,12 +62,12 @@ namespace TradeFunctions.ListMarketStatistics
             }
         }
 
-        private async Task<MarketStatistics> ProcessTickerAsync(ListMarketStatisticsRequest listMarketStatisticsRequest, Ticker ticker, List<StockPrice> stockPrices, List<StockPrice> spyPrices,
-                                                                Dictionary<int, decimal?> tickerAtrs, bool isHistoricalStatistics, CancellationToken cancellationToken)
+        private MarketStatistics ProcessTicker(Ticker ticker, List<StockPrice> stockPrices, List<DailyIndicator> dailyIndicators, bool isHistoricalStatistics)
         {
             var tickerPrices = stockPrices.Where(x => x.TickerId == ticker.Id).ToList();
-            tickerAtrs.TryGetValue(ticker.Id, out var tickerAtr);
-            var spyAtr = tickerAtrs.TryGetValue(529, out var sa) ? sa : null;
+            var spyPrices = stockPrices.Where(x => x.TickerId == 529).ToList();
+            var tickerAtr = dailyIndicators.FirstOrDefault(di => di.TickerId == ticker.Id)?.Atr;
+            var spyAtr = dailyIndicators.FirstOrDefault(di => di.TickerId == 529)?.Atr;
 
             if (tickerPrices.Any())
             {
@@ -92,28 +78,28 @@ namespace TradeFunctions.ListMarketStatistics
                     Price = tickerPrices.OrderByDescending(x => x.Timestamp).FirstOrDefault().ClosePrice,
                     FifteenMin = new()
                     {
-                        Rvol = CalculateRelativeVolume("15Min", listMarketStatisticsRequest, tickerPrices, isHistoricalStatistics),
-                        RsRw = CalculateDynamicRRS("15Min", tickerPrices, spyPrices, listMarketStatisticsRequest, isHistoricalStatistics)
+                        Rvol = CalculateRelativeVolume("15Min", tickerPrices, isHistoricalStatistics),
+                        RsRw = CalculateDynamicRRS("15Min", tickerPrices, spyPrices, isHistoricalStatistics)
                     },
                     ThirtyMin = new()
                     {
-                        Rvol = CalculateRelativeVolume("30Min", listMarketStatisticsRequest, tickerPrices, isHistoricalStatistics),
-                        RsRw = CalculateDynamicRRS("30Min", tickerPrices, spyPrices, listMarketStatisticsRequest, isHistoricalStatistics)
+                        Rvol = CalculateRelativeVolume("30Min", tickerPrices, isHistoricalStatistics),
+                        RsRw = CalculateDynamicRRS("30Min", tickerPrices, spyPrices, isHistoricalStatistics)
                     },
                     OneHour = new()
                     {
-                        Rvol = CalculateRelativeVolume("1Hour", listMarketStatisticsRequest, tickerPrices, isHistoricalStatistics),
-                        RsRw = CalculateDynamicRRS("1Hour", tickerPrices, spyPrices, listMarketStatisticsRequest, isHistoricalStatistics)
+                        Rvol = CalculateRelativeVolume("1Hour", tickerPrices, isHistoricalStatistics),
+                        RsRw = CalculateDynamicRRS("1Hour", tickerPrices, spyPrices, isHistoricalStatistics)
                     },
                     TwoHour = new()
                     {
-                        Rvol = CalculateRelativeVolume("2Hour", listMarketStatisticsRequest, tickerPrices, isHistoricalStatistics),
-                        RsRw = CalculateDynamicRRS("2Hour", tickerPrices, spyPrices, listMarketStatisticsRequest, isHistoricalStatistics)
+                        Rvol = CalculateRelativeVolume("2Hour", tickerPrices, isHistoricalStatistics),
+                        RsRw = CalculateDynamicRRS("2Hour", tickerPrices, spyPrices, isHistoricalStatistics)
                     },
                     FourHour = new()
                     {
-                        Rvol = CalculateRelativeVolume("4Hour", listMarketStatisticsRequest, tickerPrices, isHistoricalStatistics),
-                        RsRw = CalculateDynamicRRS("4Hour", tickerPrices, spyPrices, listMarketStatisticsRequest, isHistoricalStatistics)
+                        Rvol = CalculateRelativeVolume("4Hour", tickerPrices, isHistoricalStatistics),
+                        RsRw = CalculateDynamicRRS("4Hour", tickerPrices, spyPrices, isHistoricalStatistics)
                     },
                     Timestamp = tickerPrices.OrderByDescending(x => x.Timestamp).FirstOrDefault().Timestamp
                 };
@@ -123,7 +109,7 @@ namespace TradeFunctions.ListMarketStatistics
 
             return null;
         }
-        public static decimal CalculateDynamicRRS(string timeFrame, List<StockPrice> tickerPrices, List<StockPrice> spyPrices, ListMarketStatisticsRequest listMarketStatisticsRequest, bool isHistoricalStatistics)
+        public static decimal CalculateDynamicRRS(string timeFrame, List<StockPrice> tickerPrices, List<StockPrice> spyPrices, bool isHistoricalStatistics)
         {
             var periodCount = GetPeriodCountFromTimeFrame(timeFrame);
 
@@ -223,7 +209,7 @@ namespace TradeFunctions.ListMarketStatistics
         }
 
 
-        public static decimal? CalculateRelativeVolume(string timeFrame, ListMarketStatisticsRequest listMarketStatisticsRequest, List<StockPrice> prices, bool isHistoricalStatistics)
+        public static decimal? CalculateRelativeVolume(string timeFrame, List<StockPrice> prices, bool isHistoricalStatistics)
         {
             try
             {
