@@ -132,13 +132,12 @@ namespace TradeFunctions.ListMarketStatistics
             if (tickerPrices.Count < expectedCount || spyPrices.Count < expectedCount)
                 return 0;
 
-            // Focus on the 6 most recent records for the 30-minute window
-            var recentTickerPrices = tickerPrices.Take(6).ToList();
-            var recentSpyPrices = spyPrices.Take(6).ToList();
+            var recentTickerPrices = tickerPrices.Take(periodCount).ToList();
+            var recentSpyPrices = spyPrices.Take(periodCount).ToList();
 
             List<decimal> rrsValues = new List<decimal>();
 
-            for (int i = 0; i < periodCount; i++) // Loop through each of the 6 intervals
+            for (int i = 0; i < periodCount; i++)
             {
                 var tickerSegmentATR = tickerPrices.Skip(i + periodCount).Take(50).ToList();
                 var spySegmentATR = spyPrices.Skip(i + periodCount).Take(50).ToList();
@@ -199,44 +198,65 @@ namespace TradeFunctions.ListMarketStatistics
         private static decimal CalculateHistoricalAverageVolume(List<StockPrice> prices, DateTime endDate, int periodCount, int daysBack)
         {
             var historicalVolumes = new List<decimal>();
+            int daysChecked = 0;
+            int successfulDays = 0;
 
-            for (int i = 1; i <= daysBack; i++)
+            while (successfulDays < daysBack && daysChecked < 2 * daysBack) // To prevent infinite loops, limit the checks
             {
-                DateTime samePeriodStart = endDate.Date.AddDays(-i).Add(endDate.TimeOfDay).AddMinutes(-5 * (periodCount - 1));
+                daysChecked++;
+                DateTime samePeriodStart = endDate.Date.AddDays(-daysChecked).Add(endDate.TimeOfDay).AddMinutes(-5 * (periodCount - 1));
                 DateTime samePeriodEnd = samePeriodStart.AddMinutes(5 * periodCount);
 
-                var periodVolume = prices.Where(p => p.Timestamp.Value >= samePeriodStart && p.Timestamp.Value <= samePeriodEnd)
-                                         .Sum(p => p.TradingVolume ?? 0);
+                var periodVolume = prices
+                    .Where(p => p.Timestamp.Value >= samePeriodStart && p.Timestamp.Value <= samePeriodEnd)
+                    .Sum(p => p.TradingVolume ?? 0);
 
+                // Only add the volume if there was trading activity in the period
                 if (periodVolume > 0)
                 {
                     historicalVolumes.Add(periodVolume);
+                    successfulDays++;
                 }
             }
 
             return historicalVolumes.Any() ? historicalVolumes.Average() : 0;
         }
 
+
         public static decimal? CalculateRelativeVolume(string timeFrame, ListMarketStatisticsRequest listMarketStatisticsRequest, List<StockPrice> prices, bool isHistoricalStatistics)
         {
-            var periodCount = GetPeriodCountFromTimeFrame(timeFrame);
-            // Assuming each StockPrice represents a 5-minute interval
-            var latestTimestamp = prices.Max(p => p.Timestamp.Value);
-
-            // Calculate today's volume for the specified period
-            var todayVolume = CalculatePeriodVolume(prices, latestTimestamp, periodCount);
-
-            // Calculate average volume for the same period over the last 14 days
-            var averageHistoricalVolume = CalculateHistoricalAverageVolume(prices, latestTimestamp, periodCount, 14);
-
-            if (averageHistoricalVolume == 0)
+            try
             {
-                return null; // Avoid division by zero
-            }
+                var periodCount = GetPeriodCountFromTimeFrame(timeFrame);
+                // Assuming each StockPrice represents a 5-minute interval
+                if (prices.Count == 0)
+                {
+                    return null; // Return null if there are no prices
+                }
 
-            // Calculate Relative Volume (RVOL)
-            var rvol = (todayVolume / averageHistoricalVolume) * 100;
-            return Math.Round(rvol, 2);
+                var latestTimestamp = prices.Max(p => p.Timestamp.Value);
+
+                // Calculate today's volume for the specified period
+                var todayVolume = CalculatePeriodVolume(prices, latestTimestamp, periodCount);
+
+                // Calculate average volume for the same period over the last 14 days
+                var averageHistoricalVolume = CalculateHistoricalAverageVolume(prices, latestTimestamp, periodCount, 14);
+
+                if (averageHistoricalVolume == 0)
+                {
+                    return null; // Avoid division by zero
+                }
+
+                // Calculate Relative Volume (RVOL)
+                var rvol = (todayVolume / averageHistoricalVolume) * 100;
+                return Math.Round(rvol, 2);
+            }
+            catch (Exception ex)
+            {
+                // Log the exception or handle it as needed
+                Console.WriteLine($"An error occurred: {ex.Message}");
+                return null; // Return null or handle as needed upon error
+            }
         }
     }
 }
