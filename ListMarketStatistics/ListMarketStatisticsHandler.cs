@@ -51,9 +51,13 @@ namespace TradeFunctions.ListMarketStatistics
 
                     var tickerAtrs = await dbContext.DailyIndicators.ToDictionaryAsync(di => di.TickerId, di => di.Atr, cancellationToken);
 
-                    var tasks = tickers.Select(ticker => ProcessTickerAsync(listMarketStatisticsRequest, ticker, revisedStockPrices, spyPrices, tickerAtrs, isHistoricalStatistics, cancellationToken)).ToList();
+                    // var tasks = tickers.Select(ticker => ProcessTickerAsync(listMarketStatisticsRequest, ticker, revisedStockPrices, spyPrices, tickerAtrs, isHistoricalStatistics, cancellationToken)).ToList();
 
+                    // var results = await Task.WhenAll(tasks);
+
+                    var tasks = tickers.AsParallel().Select(ticker => ProcessTickerAsync(listMarketStatisticsRequest, ticker, revisedStockPrices, spyPrices, tickerAtrs, isHistoricalStatistics, cancellationToken)).ToList();
                     var results = await Task.WhenAll(tasks);
+
 
                     listMarketStatistics.AddRange(results.Where(statistics => statistics != null));
                 }
