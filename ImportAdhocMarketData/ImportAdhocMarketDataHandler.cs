@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using AssessmentDeck.Services;
+using EFCore.BulkExtensions;
 using Microsoft.Azure.Functions.Worker.Extensions.Abstractions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -39,46 +40,47 @@ namespace TradeFunctions.ImportMarketData
                 methodContainer.AddMethod(new SimpleMethod("time_series"));
                 using (var dbContext = new TradeContext(_dbConnectionStringService.ConnectionString()))
                 {
-                    dbContext.StockPrices.RemoveRange(dbContext.StockPrices);
-                    dbContext.RetryFaileds.RemoveRange(dbContext.RetryFaileds);
-                    await dbContext.SaveChangesAsync(cancellationToken);
 
-                    var tickers = await dbContext.Tickers.AsNoTracking().Where(x => x.Active == true).ToListAsync();
+                    await dbContext.Database.ExecuteSqlRawAsync("TRUNCATE TABLE trade.stock_price");
+                    await dbContext.Database.ExecuteSqlRawAsync("TRUNCATE TABLE trade.retry_failed");
 
+
+                    var tickers = await dbContext.Tickers.AsNoTracking().Where(x => x.Active == true).ToListAsync(cancellationToken);
                     var tickerNames = tickers.Select(x => x.TickerName).ToList();
-
                     var stockDataResponse = await _twelveDataService.FetchStockDataAsync(tickerNames, request.Intervals, request.StartDate, request.EndDate, 5000, methodContainer);
+                    var chartId = await dbContext.ChartPeriods.Where(x => x.TimeFrame == request.Intervals.FirstOrDefault()).Select(x => x.Id).FirstOrDefaultAsync(cancellationToken);
 
-                    var chartId = await dbContext.ChartPeriods.Where(x => x.TimeFrame == request.Intervals.FirstOrDefault()).Select(x => x.Id).FirstOrDefaultAsync();
+                    List<StockPrice> stockPricesToInsert = new List<StockPrice>();
 
                     foreach (var stockData in stockDataResponse.Data)
                     {
-                        var tickerId = tickers.Where(x => x.TickerName == stockData?.Meta?.Symbol).Select(x => x.Id).FirstOrDefault();
-                        if (stockData == null)
+                        var tickerId = tickers.FirstOrDefault(x => x.TickerName == stockData?.Meta?.Symbol)?.Id;
+                        if (stockData?.Values == null)
                         {
-                            _logger.LogWarning("Encountered a null stockData in the collection.");
-                            continue; // Skip this iteration.
+                            _logger.LogWarning($"Encountered invalid stockData. Null data: {stockData == null}, Null values: {stockData?.Values == null}");
+                            continue;
                         }
 
-                        if (stockData.Values == null)
-                        {
-                            _logger.LogWarning("Values in stockData is null. Meta: {Meta}", stockData.Meta);
-                            continue; // Skip this iteration.
-                        }
                         foreach (var value in stockData.Values)
                         {
                             var stockPrice = MapToStockPrice(value, stockData.Meta, tickerId, chartId);
-                            dbContext.StockPrices.Add(stockPrice);
+                            stockPricesToInsert.Add(stockPrice);
                         }
                     }
-                    await dbContext.SaveChangesAsync(cancellationToken);
+
+                    // Bulk insert new records
+                    if (stockPricesToInsert.Any())
+                    {
+                        var bulkConfig = new BulkConfig { BulkCopyTimeout = 0, BatchSize = 4000 }; 
+                        await dbContext.BulkInsertAsync(stockPricesToInsert, bulkConfig, cancellationToken: cancellationToken);
+                    }
                 }
 
                 return true;
             }
             catch (Exception ex)
             {
-                 _logger.LogWarning($"An error occured {ex}");
+                _logger.LogError($"An error occurred: {ex}");
                 return false;
             }
         }
