@@ -19,6 +19,8 @@ public partial class TradeContext : DbContext
 
     public virtual DbSet<StockPrice> StockPrices { get; set; }
 
+    public virtual DbSet<RetryFailed> RetryFaileds { get; set; }
+
     public virtual DbSet<Ticker> Tickers { get; set; }
 
     public virtual DbSet<DailyIndicator> DailyIndicators { get; set; }
@@ -54,6 +56,32 @@ public partial class TradeContext : DbContext
                 .HasMaxLength(255)
                 .HasColumnName("time_frame");
             entity.Property(e => e.TimePeriod).HasColumnName("time_period");
+        });
+
+         modelBuilder.Entity<RetryFailed>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("retry_failed_pkey");
+
+            entity.ToTable("retry_failed", "trade");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.CreateDt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnName("create_dt");
+            entity.Property(e => e.LastUpdateDt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnName("last_update_dt");
+            entity.Property(e => e.Reason)
+                .HasMaxLength(1000)
+                .HasColumnName("reason");
+            entity.Property(e => e.TickerId).HasColumnName("ticker_id");
+            entity.Property(e => e.Timestamp)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("timestamp");
+
+            entity.HasOne(d => d.Ticker).WithMany(p => p.RetryFaileds)
+                .HasForeignKey(d => d.TickerId)
+                .HasConstraintName("fk_ticker_id");
         });
 
         modelBuilder.Entity<StockPrice>(entity =>

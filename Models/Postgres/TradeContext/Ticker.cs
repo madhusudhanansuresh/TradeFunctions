@@ -20,4 +20,5 @@ public partial class Ticker
     public virtual ICollection<StockPrice> StockPrices { get; set; } = new List<StockPrice>();
     public virtual ICollection<DailyIndicator> DailyIndicators { get; set; } = new List<DailyIndicator>();
     public virtual ICollection<Watchlist> Watchlists { get; set; } = new List<Watchlist>();
+    public virtual ICollection<RetryFailed> RetryFaileds { get; set; } = new List<RetryFailed>();
 }

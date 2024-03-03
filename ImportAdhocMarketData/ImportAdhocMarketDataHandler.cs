@@ -40,6 +40,7 @@ namespace TradeFunctions.ImportMarketData
                 using (var dbContext = new TradeContext(_dbConnectionStringService.ConnectionString()))
                 {
                     dbContext.StockPrices.RemoveRange(dbContext.StockPrices);
+                    dbContext.RetryFaileds.RemoveRange(dbContext.RetryFaileds);
                     await dbContext.SaveChangesAsync(cancellationToken);
 
                     var tickers = await dbContext.Tickers.Where(x => x.Active == true).ToListAsync();

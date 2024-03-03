@@ -125,7 +125,49 @@ namespace TradeFunctions.ImportMarketData
             return roundedTimeEst.ToString("yyyy-MM-dd HH:mm:00");
         }
 
-        public async Task RetryFailedStocks(List<Ticker> tickers, List<string> tickerNames, string startDate, string endDate, int outputSize, MethodContainer methodContainer)
+        public async Task ProcessFailedRetries(CancellationToken cancellationToken = default)
+        {
+            List<RetryFailed> failedRetries;
+            using (var dbContext = new TradeContext(_dbConnectionStringService.ConnectionString()))
+            {
+                // Step 1: Retrieve failed runs
+                failedRetries = await dbContext.RetryFaileds.Include(r => r.Ticker).ToListAsync(cancellationToken);
+            }
+
+            if (failedRetries.Count > 0)
+            {
+                var methodContainer = new MethodContainer();
+                methodContainer.AddMethod(new SimpleMethod("time_series"));
+
+                foreach (var failedRetry in failedRetries)
+                {
+                    try
+                    {
+                        var tickerNames = new List<string> { failedRetry.Ticker.TickerName };
+                        var startDate = failedRetry.Timestamp?.ToString("yyyy-MM-dd HH:mm:00") ?? GetRoundedTime();
+                        var endDate = GetRoundedTime();
+
+                        bool isSuccessful = await RetryFailedStocks(new List<Ticker> { failedRetry.Ticker }, tickerNames, startDate, endDate, 1, methodContainer);
+
+                        // Step 3: Delete successful retries
+                        if (isSuccessful)
+                        {
+                            using (var dbDeleteContext = new TradeContext(_dbConnectionStringService.ConnectionString()))
+                            {
+                                dbDeleteContext.RetryFaileds.Remove(failedRetry);
+                                await dbDeleteContext.SaveChangesAsync(cancellationToken);
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError($"Failed to process retry for TickerId {failedRetry.TickerId}: {ex.Message}");
+                    }
+                }
+            }
+        }
+
+        public async Task<bool> RetryFailedStocks(List<Ticker> tickers, List<string> tickerNames, string startDate, string endDate, int outputSize, MethodContainer methodContainer)
         {
             int retryCount = 0;
             int maxRetries = 3;
@@ -166,6 +208,7 @@ namespace TradeFunctions.ImportMarketData
                         {
                             await dbContext.SaveChangesAsync();
                             isSuccessful = true; // Mark operation as successful if data is valid.
+                            return true; // Successfully completed the operation
                         }
                     }
                 }
@@ -182,12 +225,44 @@ namespace TradeFunctions.ImportMarketData
                     }
                 }
             }
+
             if (!isSuccessful)
             {
                 string tickerNamesConcatenated = String.Join(", ", tickerNames);
                 _logger.LogError($"Failed to complete operation after 3 retries due to invalid stock data. Tickers for time period: {startDate} and stocks: {tickerNamesConcatenated}.");
                 await _pushOverService.SendNotificationAsync($"Failed to complete operation after 3 retries due to invalid stock data. Tickers: {tickerNamesConcatenated}", "Failure - Time Series Import", "", "", "1");
+
+                // Insert failed tickers into RetryFailed table
+                using (var dbContext = new TradeContext(_dbConnectionStringService.ConnectionString()))
+                {
+                    foreach (var ticker in tickers)
+                    {
+                        var retryFailedRecord = new RetryFailed
+                        {
+                            TickerId = ticker.Id,
+                            Timestamp = Convert.ToDateTime(startDate),
+                            Reason = "Failed to fetch or process stock data after 3 retries",
+                            CreateDt = DateTime.UtcNow,
+                            LastUpdateDt = DateTime.UtcNow
+                        };
+
+                        dbContext.RetryFaileds.Add(retryFailedRecord);
+                    }
+
+                    try
+                    {
+                        await dbContext.SaveChangesAsync();
+                        _logger.LogInformation($"Successfully inserted {tickers.Count} records into RetryFailed table.");
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError($"Failed to insert records into RetryFailed table: {ex.Message}");
+                    }
+                }
+                return false;
             }
+
+            return isSuccessful;
         }
 
     }
