@@ -45,7 +45,7 @@ namespace TradeFunctions.ListMarketStatistics
 
                     var tickers = await dbContext.Tickers.Where(x => x.Active == true).ToListAsync(cancellationToken);
 
-                    var revisedStockPrices = await stockPrices.ToListAsync(cancellationToken);
+                    var revisedStockPrices = await stockPrices.AsNoTracking().ToListAsync(cancellationToken);
 
                     var spyPrices = revisedStockPrices.Where(x => x.TickerId == 529).ToList();
 
@@ -53,10 +53,6 @@ namespace TradeFunctions.ListMarketStatistics
 
                     var tasks = tickers.Select(ticker => ProcessTickerAsync(listMarketStatisticsRequest, ticker, revisedStockPrices, spyPrices, tickerAtrs, isHistoricalStatistics, cancellationToken)).ToList();
                     var results = await Task.WhenAll(tasks);
-
-                    // var tasks = tickers.AsParallel().Select(ticker => ProcessTickerAsync(listMarketStatisticsRequest, ticker, revisedStockPrices, spyPrices, tickerAtrs, isHistoricalStatistics, cancellationToken)).ToList();
-                    // var results = await Task.WhenAll(tasks);
-
 
                     listMarketStatistics.AddRange(results.Where(statistics => statistics != null));
                 }
@@ -76,7 +72,6 @@ namespace TradeFunctions.ListMarketStatistics
         {
             var tickerPrices = stockPrices.Where(x => x.TickerId == ticker.Id).ToList();
             tickerAtrs.TryGetValue(ticker.Id, out var tickerAtr);
-            var spyAtr = tickerAtrs.TryGetValue(529, out var sa) ? sa : null;
 
             if (tickerPrices.Any())
             {
