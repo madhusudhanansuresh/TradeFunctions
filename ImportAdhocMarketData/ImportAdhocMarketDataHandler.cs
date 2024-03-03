@@ -43,7 +43,7 @@ namespace TradeFunctions.ImportMarketData
                     dbContext.RetryFaileds.RemoveRange(dbContext.RetryFaileds);
                     await dbContext.SaveChangesAsync(cancellationToken);
 
-                    var tickers = await dbContext.Tickers.Where(x => x.Active == true).ToListAsync();
+                    var tickers = await dbContext.Tickers.AsNoTracking().Where(x => x.Active == true).ToListAsync();
 
                     var tickerNames = tickers.Select(x => x.TickerName).ToList();
 
