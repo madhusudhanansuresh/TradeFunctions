@@ -15,7 +15,7 @@ namespace TradeFunctions.ImportMarketData
 {
     public interface IImportAdhocMarketDataHandler
     {
-        Task<bool> ImportMarketData(ImportAdhocMarketDataRequest request, CancellationToken cancellationToken = default);
+        Task<ImportAdhocMarketDataResponse> ImportMarketData(ImportAdhocMarketDataRequest request, CancellationToken cancellationToken = default);
     }
 
 
@@ -32,7 +32,7 @@ namespace TradeFunctions.ImportMarketData
             _twelveDataService = twelveDataService;
         }
 
-        public async Task<bool> ImportMarketData(ImportAdhocMarketDataRequest request, CancellationToken cancellationToken = default)
+        public async Task<ImportAdhocMarketDataResponse> ImportMarketData(ImportAdhocMarketDataRequest request, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -75,13 +75,19 @@ namespace TradeFunctions.ImportMarketData
                         await dbContext.BulkInsertAsync(stockPricesToInsert, bulkConfig, cancellationToken: cancellationToken);
                     }
                 }
-
-                return true;
+                _logger.LogError($"Successfully");
+                return new ImportAdhocMarketDataResponse {
+                    Success = true,
+                    Message = "Successfully Imported the data"
+                };
             }
             catch (Exception ex)
             {
                 _logger.LogError($"An error occurred: {ex}");
-                return false;
+                return new ImportAdhocMarketDataResponse {
+                    Success = false,
+                    Message = "Failed to Import the data"
+                };
             }
         }
 

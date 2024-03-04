@@ -91,9 +91,7 @@ namespace TradeFunctions.ImportMarketData
             }
             catch (Exception ex)
             {
-
                 Console.WriteLine("An error occurred: " + ex.Message);
-
                 return false;
             }
         }
