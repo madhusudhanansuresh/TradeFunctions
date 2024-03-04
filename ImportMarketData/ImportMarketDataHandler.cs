@@ -234,11 +234,14 @@ namespace TradeFunctions.ImportMarketData
                 // Insert failed tickers into RetryFailed table
                 using (var dbContext = new TradeContext(_dbConnectionStringService.ConnectionString()))
                 {
-                    foreach (var ticker in tickers)
+                    
+                    foreach (var ticker in tickerNames)
                     {
+                        var tickerFromTable = dbContext.Tickers.FirstOrDefault(t => t.TickerName == ticker);
+
                         var retryFailedRecord = new RetryFailed
                         {
-                            TickerId = ticker.Id,
+                            TickerId = tickerFromTable.Id,
                             Timestamp = Convert.ToDateTime(startDate),
                             Reason = "Failed to fetch or process stock data after 3 retries",
                             CreateDt = DateTime.UtcNow,
