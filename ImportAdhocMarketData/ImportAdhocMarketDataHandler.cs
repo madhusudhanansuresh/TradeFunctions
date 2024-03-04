@@ -41,8 +41,8 @@ namespace TradeFunctions.ImportMarketData
                 using (var dbContext = new TradeContext(_dbConnectionStringService.ConnectionString()))
                 {
 
-                    await dbContext.Database.ExecuteSqlRawAsync("TRUNCATE TABLE trade.stock_price");
-                    await dbContext.Database.ExecuteSqlRawAsync("TRUNCATE TABLE trade.retry_failed");
+                    await dbContext.Database.ExecuteSqlRawAsync("TRUNCATE TABLE trade.stock_price RESTART IDENTITY");
+                    await dbContext.Database.ExecuteSqlRawAsync("TRUNCATE TABLE trade.retry_failed RESTART IDENTITY");
 
 
                     var tickers = await dbContext.Tickers.AsNoTracking().Where(x => x.Active == true).ToListAsync(cancellationToken);

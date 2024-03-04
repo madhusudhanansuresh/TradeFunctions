@@ -12,7 +12,6 @@ namespace TradeFunctions.ImportMarketData
         Task<bool> ImportMarketData(CancellationToken cancellationToken = default);
     }
 
-
     public class ImportMarketDataHandler : IImportMarketDataHandler
     {
         private readonly ILogger _logger;
@@ -81,7 +80,9 @@ namespace TradeFunctions.ImportMarketData
                     await dbContext.SaveChangesAsync(cancellationToken);
 
                     if (retryStockList.Count > 0)
-                    {
+                    {   
+                        string tickerNamesConcatenated = String.Join(", ", tickerNames);
+                        await _pushOverService.SendNotificationAsync($"Failed to pull data. Tickers: {tickerNamesConcatenated}", "Failure - Time Series Import", "", "", "1");                      
                         await RetryFailedStocks(tickers, retryStockList, startDate, endDate, 1, methodContainer);
                     }
                 }
@@ -228,9 +229,7 @@ namespace TradeFunctions.ImportMarketData
             if (!isSuccessful)
             {
                 string tickerNamesConcatenated = String.Join(", ", tickerNames);
-                _logger.LogError($"Failed to complete operation after 3 retries due to invalid stock data. Tickers for time period: {startDate} and stocks: {tickerNamesConcatenated}.");
-                await _pushOverService.SendNotificationAsync($"Failed to complete operation after 3 retries due to invalid stock data. Tickers: {tickerNamesConcatenated}", "Failure - Time Series Import", "", "", "1");
-
+                _logger.LogError($"Failed to complete operation after retries due to invalid stock data. Tickers for time period: {startDate} and stocks: {tickerNamesConcatenated}.");
                 using (var dbContext = new TradeContext(_dbConnectionStringService.ConnectionString()))
                 {
                     foreach (var tickerName in tickerNames)
