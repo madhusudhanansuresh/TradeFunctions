@@ -81,7 +81,7 @@ namespace TradeFunctions.ImportMarketData
 
                     if (retryStockList.Count > 0)
                     {   
-                        string tickerNamesConcatenated = String.Join(", ", tickerNames);
+                        string tickerNamesConcatenated = String.Join(", ", retryStockList);
                         await _pushOverService.SendNotificationAsync($"Failed to pull data. Tickers: {tickerNamesConcatenated}", "Failure - Time Series Import", "", "", "1");                      
                         await RetryFailedStocks(tickers, retryStockList, startDate, endDate, 1, methodContainer);
                     }
