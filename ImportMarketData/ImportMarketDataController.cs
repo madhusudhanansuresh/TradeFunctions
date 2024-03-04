@@ -33,7 +33,7 @@ namespace TradeFunctions.ImportMarketData
                 return;
             }
 
-            await Task.Delay(TimeSpan.FromMinutes(1));
+            await Task.Delay(TimeSpan.FromSeconds(30));
             await _importMarketData.ImportMarketData();
 
             if (myTimer.ScheduleStatus is not null)
