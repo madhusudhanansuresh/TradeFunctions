@@ -80,10 +80,10 @@ namespace TradeFunctions.ImportMarketData
 
                     await dbContext.SaveChangesAsync(cancellationToken);
 
-                    if (retryStockList.Count > 0)
-                    {
-                        await RetryFailedStocks(tickers, retryStockList, startDate, endDate, 1, methodContainer);
-                    }
+                    // if (retryStockList.Count > 0)
+                    // {
+                    //     await RetryFailedStocks(tickers, retryStockList, startDate, endDate, 1, methodContainer);
+                    // }
                 }
 
                 return true;
@@ -150,7 +150,6 @@ namespace TradeFunctions.ImportMarketData
 
                         bool isSuccessful = await RetryFailedStocks(new List<Ticker> { failedRetry.Ticker }, tickerNames, startDate, endDate, 1, methodContainer);
 
-                        // Step 3: Delete successful retries
                         if (isSuccessful)
                         {
                             using (var dbDeleteContext = new TradeContext(_dbConnectionStringService.ConnectionString()))
@@ -171,7 +170,7 @@ namespace TradeFunctions.ImportMarketData
         public async Task<bool> RetryFailedStocks(List<Ticker> tickers, List<string> tickerNames, string startDate, string endDate, int outputSize, MethodContainer methodContainer)
         {
             int retryCount = 0;
-            int maxRetries = 3;
+            int maxRetries = 1;
             bool isSuccessful = false;
 
             while (retryCount < maxRetries && !isSuccessful)
@@ -180,7 +179,7 @@ namespace TradeFunctions.ImportMarketData
                 {
                     var stockDataResponse = await _twelveDataService.FetchStockDataAsync(tickerNames, new List<string> { "5min" }, startDate, endDate, outputSize, methodContainer);
 
-                    bool dataIsValid = true; // Assume data is valid initially.
+                    bool dataIsValid = true;
 
                     using (var dbContext = new TradeContext(_dbConnectionStringService.ConnectionString()))
                     {
@@ -190,9 +189,9 @@ namespace TradeFunctions.ImportMarketData
                         {
                             if (stockData == null || stockData.Values == null)
                             {
-                                dataIsValid = false; // Invalidate the data.
+                                dataIsValid = false;
                                 _logger.LogWarning($"Encountered invalid stockData during retry. Null data: {stockData == null}, Null values: {stockData?.Values == null}");
-                                break; // Exit the loop as data is invalid.
+                                break;
                             }
                             else
                             {
@@ -208,8 +207,8 @@ namespace TradeFunctions.ImportMarketData
                         if (dataIsValid)
                         {
                             await dbContext.SaveChangesAsync();
-                            isSuccessful = true; // Mark operation as successful if data is valid.
-                            return true; // Successfully completed the operation
+                            isSuccessful = true;
+                            return true;
                         }
                     }
                 }
@@ -232,7 +231,6 @@ namespace TradeFunctions.ImportMarketData
                 _logger.LogError($"Failed to complete operation after 3 retries due to invalid stock data. Tickers for time period: {startDate} and stocks: {tickerNamesConcatenated}.");
                 await _pushOverService.SendNotificationAsync($"Failed to complete operation after 3 retries due to invalid stock data. Tickers: {tickerNamesConcatenated}", "Failure - Time Series Import", "", "", "1");
 
-                // Insert failed tickers into RetryFailed table
                 using (var dbContext = new TradeContext(_dbConnectionStringService.ConnectionString()))
                 {
                     foreach (var tickerName in tickerNames)
@@ -240,10 +238,8 @@ namespace TradeFunctions.ImportMarketData
                         var tickerFromTable = dbContext.Tickers.FirstOrDefault(t => t.TickerName == tickerName);
                         if (tickerFromTable != null)
                         {
-                            // Convert startDate to DateTime once to avoid multiple conversions
                             DateTime startDateTime = Convert.ToDateTime(startDate);
 
-                            // Check if a RetryFailed record already exists for this TickerId and Timestamp
                             bool recordExists = dbContext.RetryFaileds.Any(rf => rf.TickerId == tickerFromTable.Id && rf.Timestamp == startDateTime);
                             if (!recordExists)
                             {
