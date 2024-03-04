@@ -31,7 +31,7 @@ namespace TradeFunctions.ImportMarketData
         public async Task<bool> ImportMarketData(CancellationToken cancellationToken = default)
         {
             try
-            { 
+            {
                 await ProcessFailedRetries();
 
                 List<string> retryStockList = new List<string>();
@@ -226,7 +226,6 @@ namespace TradeFunctions.ImportMarketData
                     }
                 }
             }
-
             if (!isSuccessful)
             {
                 string tickerNamesConcatenated = String.Join(", ", tickerNames);
@@ -236,27 +235,44 @@ namespace TradeFunctions.ImportMarketData
                 // Insert failed tickers into RetryFailed table
                 using (var dbContext = new TradeContext(_dbConnectionStringService.ConnectionString()))
                 {
-                    
-                    foreach (var ticker in tickerNames)
+                    foreach (var tickerName in tickerNames)
                     {
-                        var tickerFromTable = dbContext.Tickers.FirstOrDefault(t => t.TickerName == ticker);
-
-                        var retryFailedRecord = new RetryFailed
+                        var tickerFromTable = dbContext.Tickers.FirstOrDefault(t => t.TickerName == tickerName);
+                        if (tickerFromTable != null)
                         {
-                            TickerId = tickerFromTable.Id,
-                            Timestamp = Convert.ToDateTime(startDate),
-                            Reason = "Failed to fetch or process stock data after 3 retries",
-                            CreateDt = DateTime.UtcNow,
-                            LastUpdateDt = DateTime.UtcNow
-                        };
+                            // Convert startDate to DateTime once to avoid multiple conversions
+                            DateTime startDateTime = Convert.ToDateTime(startDate);
 
-                        dbContext.RetryFaileds.Add(retryFailedRecord);
+                            // Check if a RetryFailed record already exists for this TickerId and Timestamp
+                            bool recordExists = dbContext.RetryFaileds.Any(rf => rf.TickerId == tickerFromTable.Id && rf.Timestamp == startDateTime);
+                            if (!recordExists)
+                            {
+                                var retryFailedRecord = new RetryFailed
+                                {
+                                    TickerId = tickerFromTable.Id,
+                                    Timestamp = startDateTime,
+                                    Reason = "Failed to fetch or process stock data after 3 retries",
+                                    CreateDt = DateTime.UtcNow,
+                                    LastUpdateDt = DateTime.UtcNow
+                                };
+
+                                dbContext.RetryFaileds.Add(retryFailedRecord);
+                            }
+                            else
+                            {
+                                _logger.LogInformation($"Skipped insertion for Ticker ID {tickerFromTable.Id} with Timestamp {startDateTime} as it already exists.");
+                            }
+                        }
+                        else
+                        {
+                            _logger.LogWarning($"Ticker not found: {tickerName}");
+                        }
                     }
 
                     try
                     {
-                        await dbContext.SaveChangesAsync();
-                        _logger.LogInformation($"Successfully inserted {tickers.Count} records into RetryFailed table.");
+                        int insertedRecords = await dbContext.SaveChangesAsync();
+                        _logger.LogInformation($"Successfully inserted {insertedRecords} records into RetryFailed table.");
                     }
                     catch (Exception ex)
                     {
