@@ -62,14 +62,14 @@ namespace TradeFunctions.ImportMarketData
                         if (stockData == null)
                         {
                             _logger.LogWarning("Encountered a null stockData in the collection.");
-                            continue; // Skip this iteration.
+                            continue; 
                         }
 
                         if (stockData.Values == null)
                         {
                             retryStockList.Add(stockData.Meta.Symbol);
                             _logger.LogWarning("Values in stockData is null. Meta: {Meta}", stockData.Meta);
-                            continue; // Skip this iteration.
+                            continue; 
                         }
                         foreach (var value in stockData.Values)
                         {
@@ -80,10 +80,10 @@ namespace TradeFunctions.ImportMarketData
 
                     await dbContext.SaveChangesAsync(cancellationToken);
 
-                    // if (retryStockList.Count > 0)
-                    // {
-                    //     await RetryFailedStocks(tickers, retryStockList, startDate, endDate, 1, methodContainer);
-                    // }
+                    if (retryStockList.Count > 0)
+                    {
+                        await RetryFailedStocks(tickers, retryStockList, startDate, endDate, 1, methodContainer);
+                    }
                 }
 
                 return true;
