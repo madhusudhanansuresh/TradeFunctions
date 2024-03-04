@@ -130,7 +130,6 @@ namespace TradeFunctions.ImportMarketData
             List<RetryFailed> failedRetries;
             using (var dbContext = new TradeContext(_dbConnectionStringService.ConnectionString()))
             {
-                // Step 1: Retrieve failed runs
                 failedRetries = await dbContext.RetryFaileds.Include(r => r.Ticker).ToListAsync(cancellationToken);
             }
 
@@ -144,8 +143,8 @@ namespace TradeFunctions.ImportMarketData
                     try
                     {
                         var tickerNames = new List<string> { failedRetry.Ticker.TickerName };
-                        var startDate = failedRetry.Timestamp?.ToString("yyyy-MM-dd HH:mm:00") ?? GetRoundedTime();
-                        var endDate = GetRoundedTime();
+                        var startDate = failedRetry.Timestamp?.ToString("yyyy-MM-dd HH:mm:00");
+                        var endDate = failedRetry.Timestamp?.ToString("yyyy-MM-dd HH:mm:00");
 
                         bool isSuccessful = await RetryFailedStocks(new List<Ticker> { failedRetry.Ticker }, tickerNames, startDate, endDate, 1, methodContainer);
 
