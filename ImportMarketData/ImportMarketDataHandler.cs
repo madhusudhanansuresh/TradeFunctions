@@ -31,7 +31,9 @@ namespace TradeFunctions.ImportMarketData
         public async Task<bool> ImportMarketData(CancellationToken cancellationToken = default)
         {
             try
-            {
+            { 
+                await ProcessFailedRetries();
+
                 List<string> retryStockList = new List<string>();
                 var methodContainer = new MethodContainer();
                 methodContainer.AddMethod(new SimpleMethod("time_series"));
