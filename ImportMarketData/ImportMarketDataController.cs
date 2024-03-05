@@ -19,6 +19,14 @@ namespace TradeFunctions.ImportMarketData
         [Function("ImportMarketData")]
         public async Task Run([TimerTrigger("0 */5 9-16 * * 1-5")] TimerInfo myTimer)
         {
+            var isLocal = Environment.GetEnvironmentVariable("ENVIRONMENT") == "Local";
+
+            if (isLocal)
+            {
+                _logger.LogInformation("Function is running locally. Exiting without executing.");
+                return;
+            }
+
             _logger.LogInformation($"C# Timer trigger function executed at EST: {DateTime.Now}");
 
             if (DateTime.Now.Hour == 9 && DateTime.Now.Minute < 35)
