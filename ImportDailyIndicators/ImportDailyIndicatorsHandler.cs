@@ -46,7 +46,7 @@ namespace TradeFunctions.ImportDailyIndicators
                     var tickerNames = tickers.Select(x => x.TickerName).ToList();
 
                     _logger.LogInformation($"Fetching stock data for tickers: {string.Join(", ", tickers)}.");
-                    var stockDataResponse = await _twelveDataService.FetchStockDataAsync(tickerNames, [timeFrame], Timestamp, "", 1, methodContainer);
+                    var stockDataResponse = await _twelveDataService.FetchStockDataAsync(tickerNames, [timeFrame], "", "", 1, methodContainer);
 
 
                     dbContext.DailyIndicators.RemoveRange(dbContext.DailyIndicators);
