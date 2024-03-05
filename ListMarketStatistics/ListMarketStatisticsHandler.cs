@@ -47,7 +47,7 @@ namespace TradeFunctions.ListMarketStatistics
 
                     List<Ticker> tickers = new List<Ticker>();
 
-                    if (listMarketStatisticsRequest.TickerNames.Count > 0)
+                    if (listMarketStatisticsRequest?.TickerNames?.Count > 0)
                     {
                         tickers = await dbContext.Tickers.Where(x => x.Active == true && listMarketStatisticsRequest.TickerNames.Contains(x.TickerName)).ToListAsync(cancellationToken);
                     }
