@@ -3,6 +3,8 @@ using AssessmentDeck.Services;
 using Microsoft.EntityFrameworkCore;
 using TradeFunctions.Models.Postgres.TradeContext;
 using TradeFunctions.ImportDailyIndicators;
+using Azure.Core;
+using System.Security.Cryptography.X509Certificates;
 
 namespace TradeFunctions.ListMarketStatistics
 {
@@ -43,7 +45,16 @@ namespace TradeFunctions.ListMarketStatistics
                         stockPrices = dbContext.StockPrices.Where(x => x.Timestamp <= Convert.ToDateTime(listMarketStatisticsRequest.EndDateTime) && x.Timestamp >= thirtyDaysAgo);
                     }
 
-                    var tickers = await dbContext.Tickers.Where(x => x.Active == true).ToListAsync(cancellationToken);
+                    List<Ticker> tickers = new List<Ticker>();
+
+                    if (listMarketStatisticsRequest.TickerNames.Count > 0)
+                    {
+                        tickers = await dbContext.Tickers.Where(x => x.Active == true && listMarketStatisticsRequest.TickerNames.Contains(x.TickerName)).ToListAsync(cancellationToken);
+                    }
+                    else
+                    {
+                        tickers = await dbContext.Tickers.Where(x => x.Active == true).ToListAsync(cancellationToken);
+                    }
 
                     var revisedStockPrices = await stockPrices.AsNoTracking().ToListAsync(cancellationToken);
 
@@ -70,7 +81,8 @@ namespace TradeFunctions.ListMarketStatistics
         private async Task<MarketStatistics> ProcessTickerAsync(ListMarketStatisticsRequest listMarketStatisticsRequest, Ticker ticker, List<StockPrice> stockPrices, List<StockPrice> spyPrices,
                                                                 Dictionary<int, decimal?> tickerAtrs, bool isHistoricalStatistics, CancellationToken cancellationToken)
         {
-            var tickerPrices = stockPrices.Where(x => x.TickerId == ticker.Id).ToList();
+            var tickerPrices = stockPrices.Where(x => x.TickerId == ticker.Id).OrderByDescending(x => x.Timestamp).ToList();
+            var spyPricesByDescending = spyPrices.OrderByDescending(x => x.Timestamp).ToList();
             tickerAtrs.TryGetValue(ticker.Id, out var tickerAtr);
 
             if (tickerPrices.Any())
@@ -83,27 +95,27 @@ namespace TradeFunctions.ListMarketStatistics
                     FifteenMin = new()
                     {
                         Rvol = CalculateRelativeVolume("15Min", tickerPrices),
-                        RsRw = CalculateDynamicRRS("15Min", tickerPrices, spyPrices)
+                        RsRw = CalculateDynamicRRS("15Min", tickerPrices, spyPricesByDescending)
                     },
                     ThirtyMin = new()
                     {
                         Rvol = CalculateRelativeVolume("30Min", tickerPrices),
-                        RsRw = CalculateDynamicRRS("30Min", tickerPrices, spyPrices)
+                        RsRw = CalculateDynamicRRS("30Min", tickerPrices, spyPricesByDescending)
                     },
                     OneHour = new()
                     {
                         Rvol = CalculateRelativeVolume("1Hour", tickerPrices),
-                        RsRw = CalculateDynamicRRS("1Hour", tickerPrices, spyPrices)
+                        RsRw = CalculateDynamicRRS("1Hour", tickerPrices, spyPricesByDescending)
                     },
                     TwoHour = new()
                     {
                         Rvol = CalculateRelativeVolume("2Hour", tickerPrices),
-                        RsRw = CalculateDynamicRRS("2Hour", tickerPrices, spyPrices)
+                        RsRw = CalculateDynamicRRS("2Hour", tickerPrices, spyPricesByDescending)
                     },
                     FourHour = new()
                     {
                         Rvol = CalculateRelativeVolume("4Hour", tickerPrices),
-                        RsRw = CalculateDynamicRRS("4Hour", tickerPrices, spyPrices)
+                        RsRw = CalculateDynamicRRS("4Hour", tickerPrices, spyPricesByDescending)
                     },
                     Timestamp = tickerPrices.OrderByDescending(x => x.Timestamp).FirstOrDefault().Timestamp
                 };

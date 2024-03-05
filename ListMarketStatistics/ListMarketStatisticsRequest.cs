@@ -7,5 +7,8 @@ namespace TradeFunctions.ListMarketStatistics
     {
          [JsonPropertyName("endDateTime")]
         public string EndDateTime { get; set; }
+
+        [JsonPropertyName("tickerNames")]
+        public List<string> TickerNames { get; set; }
     }   
 }
