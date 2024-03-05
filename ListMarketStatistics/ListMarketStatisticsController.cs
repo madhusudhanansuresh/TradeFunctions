@@ -30,11 +30,8 @@ namespace TradeFunctions.ListMarketStatistics
             var data = await _listMarketStatisticsHandler.ListStatistics(listMarketStatisticsRequest);
             var response = request.CreateResponse(HttpStatusCode.OK);
             response.Headers.Add("Content-Type", "application/json; charset=utf-8");
-
             var jsonResponse = JsonSerializer.Serialize(data);
             response.WriteString(jsonResponse);
-
-
             return response;
         }
     }
