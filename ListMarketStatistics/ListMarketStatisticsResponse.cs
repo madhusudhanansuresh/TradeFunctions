@@ -27,10 +27,10 @@ namespace TradeFunctions.ListMarketStatistics
         public decimal? Price { get; set; }
 
         [JsonPropertyName("fiveMin")]
-        public Statistics FiveMins { get; set; }
+        public Statistics FiveMin { get; set; }
 
-        [JsonPropertyName("tenMins")]
-        public Statistics TenMins { get; set; }
+        [JsonPropertyName("tenMin")]
+        public Statistics TenMin { get; set; }
 
         [JsonPropertyName("fifteenMin")]
         public Statistics FifteenMin { get; set; }

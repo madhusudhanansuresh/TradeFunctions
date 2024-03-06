@@ -92,16 +92,16 @@ namespace TradeFunctions.ListMarketStatistics
                     Ticker = ticker.TickerName,
                     ATR = tickerAtr.HasValue ? Math.Round(tickerAtr.Value, 2) : (decimal?)null,
                     Price = tickerPrices.OrderByDescending(x => x.Timestamp).FirstOrDefault().ClosePrice,
-                    FiveMins = new()
-                    {
-                        Rvol = CalculateRelativeVolume("5Min", tickerPrices),
-                        RsRw = CalculateDynamicRRS("5Min", tickerPrices, spyPricesByDescending)
-                    },
-                    TenMins = new()
-                    {
-                        Rvol = CalculateRelativeVolume("10Min", tickerPrices),
-                        RsRw = CalculateDynamicRRS("10Min", tickerPrices, spyPricesByDescending)
-                    },
+                    // FiveMin = new()
+                    // {
+                    //     Rvol = CalculateRelativeVolume("5Min", tickerPrices),
+                    //     RsRw = CalculateDynamicRRS("5Min", tickerPrices, spyPricesByDescending)
+                    // },
+                    // TenMin = new()
+                    // {
+                    //     Rvol = CalculateRelativeVolume("10Min", tickerPrices),
+                    //     RsRw = CalculateDynamicRRS("10Min", tickerPrices, spyPricesByDescending)
+                    // },
                     FifteenMin = new()
                     {
                         Rvol = CalculateRelativeVolume("15Min", tickerPrices),
