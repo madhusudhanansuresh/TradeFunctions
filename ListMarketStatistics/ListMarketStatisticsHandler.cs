@@ -254,13 +254,17 @@ namespace TradeFunctions.ListMarketStatistics
             try
             {
                 var periodCount = GetPeriodCountFromTimeFrame(timeFrame);
+                var latestTimestamp = prices.Max(p => p.Timestamp.Value);
+
+                if (prices.Where(x => x.Timestamp.Value.Date == latestTimestamp.Date).Count() < periodCount)
+                {
+                    return null;
+                }
                 // Assuming each StockPrice represents a 5-minute interval
                 if (prices.Count == 0)
                 {
                     return null; // Return null if there are no prices
                 }
-
-                var latestTimestamp = prices.Max(p => p.Timestamp.Value);
 
                 // Calculate today's volume for the specified period
                 var todayVolume = CalculatePeriodVolume(prices, latestTimestamp, periodCount);
