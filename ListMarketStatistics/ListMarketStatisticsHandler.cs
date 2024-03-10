@@ -102,16 +102,16 @@ namespace TradeFunctions.ListMarketStatistics
                     //     Rvol = CalculateRelativeVolume("10Min", tickerPrices),
                     //     RsRw = CalculateDynamicRRS("10Min", tickerPrices, spyPricesByDescending)
                     // },
-                    TwentyMin = new()
-                    {
-                        Rvol = CalculateRelativeVolume("20Min", tickerPrices),
-                        RsRw = CalculateDynamicRRS("20Min", tickerPrices, spyPricesByDescending)
-                    },
-                    TwentyFiveMin = new()
-                    {
-                        Rvol = CalculateRelativeVolume("25Min", tickerPrices),
-                        RsRw = CalculateDynamicRRS("25Min", tickerPrices, spyPricesByDescending)
-                    },
+                    // TwentyMin = new()
+                    // {
+                    //     Rvol = CalculateRelativeVolume("20Min", tickerPrices),
+                    //     RsRw = CalculateDynamicRRS("20Min", tickerPrices, spyPricesByDescending)
+                    // },
+                    // TwentyFiveMin = new()
+                    // {
+                    //     Rvol = CalculateRelativeVolume("25Min", tickerPrices),
+                    //     RsRw = CalculateDynamicRRS("25Min", tickerPrices, spyPricesByDescending)
+                    // },
                     FifteenMin = new()
                     {
                         Rvol = CalculateRelativeVolume("15Min", tickerPrices),
