@@ -40,7 +40,7 @@ namespace TradeFunctions.ListMarketStatistics
                     if (isHistoricalStatistics)
                     {
                         thirtyDaysAgo = Convert.ToDateTime(listMarketStatisticsRequest.EndDateTime).AddDays(-30);
-                        stockPrices = dbContext.StockPrices.Where(x => x.Timestamp <= Convert.ToDateTime(listMarketStatisticsRequest.EndDateTime).AddMinutes(-5) && x.Timestamp >= thirtyDaysAgo);
+                        stockPrices = dbContext.StockPrices.Where(x => x.Timestamp <= Convert.ToDateTime(listMarketStatisticsRequest.EndDateTime) && x.Timestamp >= thirtyDaysAgo);
                     }
 
                     List<Ticker> tickers = new List<Ticker>();
