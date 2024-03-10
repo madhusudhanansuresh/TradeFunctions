@@ -3,8 +3,6 @@ using AssessmentDeck.Services;
 using Microsoft.EntityFrameworkCore;
 using TradeFunctions.Models.Postgres.TradeContext;
 using TradeFunctions.ImportDailyIndicators;
-using Azure.Core;
-using System.Security.Cryptography.X509Certificates;
 
 namespace TradeFunctions.ListMarketStatistics
 {
@@ -42,7 +40,7 @@ namespace TradeFunctions.ListMarketStatistics
                     if (isHistoricalStatistics)
                     {
                         thirtyDaysAgo = Convert.ToDateTime(listMarketStatisticsRequest.EndDateTime).AddDays(-30);
-                        stockPrices = dbContext.StockPrices.Where(x => x.Timestamp <= Convert.ToDateTime(listMarketStatisticsRequest.EndDateTime) && x.Timestamp >= thirtyDaysAgo);
+                        stockPrices = dbContext.StockPrices.Where(x => x.Timestamp <= Convert.ToDateTime(listMarketStatisticsRequest.EndDateTime).AddMinutes(-5) && x.Timestamp >= thirtyDaysAgo);
                     }
 
                     List<Ticker> tickers = new List<Ticker>();
