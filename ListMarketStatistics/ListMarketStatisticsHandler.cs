@@ -216,7 +216,7 @@ namespace TradeFunctions.ListMarketStatistics
 
         private static decimal CalculatePeriodVolume(List<StockPrice> prices, DateTime endDate, int periodCount)
         {
-            var count = prices.Where(p => p.Timestamp.Value <= endDate && p.Timestamp.Value > endDate.AddMinutes(-5 * periodCount)).Count();
+            // var count = prices.Where(p => p.Timestamp.Value <= endDate && p.Timestamp.Value > endDate.AddMinutes(-5 * periodCount)).Count();
             return prices.Where(p => p.Timestamp.Value <= endDate && p.Timestamp.Value > endDate.AddMinutes(-5 * periodCount))
                          .Sum(p => p.TradingVolume ?? 0);
         }
@@ -234,7 +234,7 @@ namespace TradeFunctions.ListMarketStatistics
                 DateTime samePeriodEnd = samePeriodStart.AddMinutes(5 * periodCount);
 
                 var periodVolume = prices
-                    .Where(p => p.Timestamp.Value >= samePeriodStart && p.Timestamp.Value <= samePeriodEnd)
+                    .Where(p => p.Timestamp.Value >= samePeriodStart && p.Timestamp.Value < samePeriodEnd)
                     .Sum(p => p.TradingVolume ?? 0);
 
                 // Only add the volume if there was trading activity in the period
