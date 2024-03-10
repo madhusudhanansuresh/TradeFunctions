@@ -35,6 +35,12 @@ namespace TradeFunctions.ListMarketStatistics
         [JsonPropertyName("fifteenMin")]
         public Statistics FifteenMin { get; set; }
 
+        [JsonPropertyName("twentyMin")]
+        public Statistics TwentyMin { get; set; }
+
+        [JsonPropertyName("twentyFiveMin")]
+        public Statistics TwentyFiveMin { get; set; }
+
         [JsonPropertyName("thirtyMin")]
         public Statistics ThirtyMin { get; set; }
 
