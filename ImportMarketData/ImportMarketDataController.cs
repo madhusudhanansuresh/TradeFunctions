@@ -17,7 +17,7 @@ namespace TradeFunctions.ImportMarketData
         }
 
         [Function("ImportMarketData")]
-        public async Task Run([TimerTrigger("0 */5 9-16 * * 1-5")] TimerInfo myTimer)
+        public async Task Run([TimerTrigger("4 */5 9-16 * * 1-5")] TimerInfo myTimer)
         {
             var isLocal = Environment.GetEnvironmentVariable("ENVIRONMENT") == "Local";
 
