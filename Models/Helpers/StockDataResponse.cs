@@ -27,7 +27,7 @@ public class MetaData
 
 public class ValueData
 {
-    public DateTime Datetime { get; set; }
+    public DateTime? Datetime { get; set; }
     public string Open { get; set; }
     public string High { get; set; }
     public string Low { get; set; }
